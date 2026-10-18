@@ -6,7 +6,7 @@ import {
 } from 'react-icons/fi'
 
 /* -----------------------------------------------------------------------------
- *  EDIT ME. Copy and links. Repo/docs are private for now, so they point at '#'.
+ *  EDIT ME. Copy and links.
  *  The tool-call JSON and read_only/write verdicts below mirror the real
  *  shapes JARVIS writes to logs/audit.jsonl.
  * -------------------------------------------------------------------------- */
