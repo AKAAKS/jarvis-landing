@@ -243,6 +243,11 @@ export default function App() {
               <span key={t} className="tag">{t}</span>
             ))}
           </div>
+
+          <figure className="shot hero-shot">
+            <div className="shot-bar"><span /><span /><span /> clients.cli</div>
+            <img src="/cli.png" alt="A real JARVIS CLI session: play Die For You, open Firefox, and set a reminder" />
+          </figure>
         </div>
       </section>
 
@@ -257,6 +262,12 @@ export default function App() {
             </p>
           </div>
           <div data-reveal><Anatomy /></div>
+
+          <figure className="shot" data-reveal style={{ marginTop: 30, maxWidth: 960, marginInline: 'auto' }}>
+            <div className="shot-bar"><span /><span /><span /> logs/audit.jsonl</div>
+            <div className="shot-scroll"><img src="/audit.png" alt="JARVIS audit log: each tool call recorded with a read-only or write verdict" /></div>
+            <figcaption className="shot-cap">Not a mockup: every tool call JARVIS makes is recorded with a read-only or write security verdict.</figcaption>
+          </figure>
         </div>
       </section>
 
@@ -287,6 +298,11 @@ export default function App() {
               </div>
             ))}
           </div>
+
+          <figure className="shot" data-reveal style={{ marginTop: 30, maxWidth: 860, marginInline: 'auto' }}>
+            <img src="/spotify.png" alt="Spotify playing Die For You by The Weeknd, started by JARVIS" />
+            <figcaption className="shot-cap">“Play Die For You by The Weeknd,” and it’s actually playing.</figcaption>
+          </figure>
         </div>
       </section>
 

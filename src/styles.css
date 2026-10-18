@@ -239,6 +239,17 @@ img { max-width: 100%; display: block; }
 .footer-inner { display: flex; justify-content: space-between; align-items: center; gap: 14px; flex-wrap: wrap; font-size: 14px; }
 .footer-inner span { display: inline-flex; align-items: center; gap: 8px; }
 
+/* ---- Screenshots ---- */
+.shot { margin: 0; border: 1px solid var(--border); border-radius: 16px; overflow: hidden; background: var(--code-bg); box-shadow: var(--shadow); }
+.shot img { display: block; width: 100%; height: auto; }
+.shot-bar { display: flex; align-items: center; gap: 7px; padding: 10px 14px; border-bottom: 1px solid var(--border); font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 12.5px; color: var(--muted); }
+.shot-bar span { width: 10px; height: 10px; border-radius: 50%; background: #39315c; }
+.shot-bar span:nth-child(1){ background: #ff6b8b } .shot-bar span:nth-child(2){ background: var(--accent-warm) } .shot-bar span:nth-child(3){ background: var(--accent) }
+.shot-cap { font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 12.5px; color: var(--muted); padding: 11px 14px; border-top: 1px solid var(--border); }
+.hero-shot { max-width: 720px; margin: 32px auto 0; }
+.shot-scroll { overflow-x: auto; }
+.shot-scroll img { min-width: 760px; }   /* keep log rows legible; scroll on small screens */
+
 /* ---- Reveal ---- */
 [data-reveal] { opacity: 0; transform: translateY(18px); transition: opacity .6s ease, transform .6s ease; }
 [data-reveal].in { opacity: 1; transform: none; }
