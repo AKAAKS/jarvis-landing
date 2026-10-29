@@ -3,12 +3,16 @@ import {
   FiGithub, FiBookOpen, FiMic, FiHome, FiMusic, FiTv, FiMonitor,
   FiFolder, FiClock, FiZap, FiCpu, FiShield, FiVolume2, FiArrowRight,
   FiPlay, FiRotateCcw, FiCheck, FiDatabase, FiGitBranch, FiCoffee,
+  FiLock, FiTerminal, FiServer, FiActivity, FiDollarSign, FiAlertTriangle,
 } from 'react-icons/fi'
+import Orb from './orb/Orb'
+import { useScrollProgress } from './orb/hooks'
 
 /* -----------------------------------------------------------------------------
  *  EDIT ME. Copy and links.
  *  The tool-call JSON and read_only/write verdicts below mirror the real
- *  shapes JARVIS writes to logs/audit.jsonl.
+ *  shapes JARVIS writes to logs/audit.jsonl. Counts are kept honest:
+ *  40+ tools across 10 integrations, 638 tests.
  * -------------------------------------------------------------------------- */
 const LINKS = {
   github: 'https://github.com/AKAAKS/personal-assistant',
@@ -77,7 +81,6 @@ const COMMANDS = [
   },
 ]
 
-// Build the ordered step list for a command.
 function buildSteps(cmd) {
   const steps = [
     { kind: 'heard', text: cmd.heard },
@@ -95,7 +98,7 @@ function buildSteps(cmd) {
 const INTEGRATIONS = [
   { Icon: FiHome, name: 'Home Assistant', tools: ['control_light', 'control_switch', 'control_media', 'set_thermostat', 'get_device_status', 'list_devices', 'send_notification'], ex: '“Dim the living room to 30%”' },
   { Icon: FiMusic, name: 'Spotify', tools: ['spotify_play', 'spotify_search', 'spotify_now_playing', 'spotify_playback_control', 'spotify_queue', 'spotify_devices'], ex: '“Play Die For You by The Weeknd”' },
-  { Icon: FiTv, name: 'Android TV', tools: ['tv_power', 'tv_launch_app', 'tv_open_url', 'tv_search_youtube', 'tv_remote', 'tv_type_text', 'tv_status', 'tv_close_app'], ex: '“Put the F1 highlights on YouTube”' },
+  { Icon: FiTv, name: 'Android / Google TV', tools: ['tv_power', 'tv_launch_app', 'tv_open_url', 'tv_search_youtube', 'tv_remote', 'tv_type_text', 'tv_status', 'tv_close_app'], ex: '“Put the F1 highlights on YouTube”' },
   { Icon: FiMonitor, name: 'This PC', tools: ['launch_app', 'close_app', 'open_url_browser', 'list_processes', 'system_info', 'run_script'], ex: '“Open Firefox”' },
   { Icon: FiFolder, name: 'Files', tools: ['search_files', 'read_document'], ex: '“Find my tax PDF and summarize it”' },
   { Icon: FiDatabase, name: 'Memory', tools: ['remember', 'recall'], ex: '“Remember I prefer metric units”' },
@@ -105,20 +108,44 @@ const INTEGRATIONS = [
   { Icon: FiZap, name: 'Suggestions', tools: ['list_proposals', 'accept_proposal', 'dismiss_proposal'], ex: '“Show suggestions”' },
 ]
 
-function useReveal() {
-  const ref = useRef(null)
-  useEffect(() => {
-    const els = ref.current?.querySelectorAll('[data-reveal]') || []
-    if (!('IntersectionObserver' in window)) { els.forEach((el) => el.classList.add('in')); return }
-    const io = new IntersectionObserver(
-      (es) => es.forEach((e) => e.isIntersecting && e.target.classList.add('in')),
-      { threshold: 0.12 },
-    )
-    els.forEach((el) => io.observe(el))
-    return () => io.disconnect()
-  }, [])
-  return ref
-}
+const LISTEN = [
+  { Icon: FiMic, t: 'Wake word', d: '“hey jarvis”, detected locally with openWakeWord — no cloud listening.' },
+  { Icon: FiActivity, t: 'Speech', d: 'Whisper STT turns what you said into text on-device.' },
+  { Icon: FiVolume2, t: 'Voice', d: 'Offline-first SAPI5 by default; neural edge-tts when there’s a connection.' },
+  { Icon: FiZap, t: 'Barge-in', d: 'Talk over it mid-sentence and it stops, listens, and re-plans.' },
+  { Icon: FiRotateCcw, t: 'Follow-up', d: 'A hands-free window after each reply, so you can keep going.' },
+  { Icon: FiCpu, t: 'Persona', d: 'Dry, brief, and literal. It answers and gets out of the way.' },
+]
+
+const GUARD = [
+  { Icon: FiLock, t: 'One choke-point', d: 'Every tool call funnels through a single guard before it runs.' },
+  { Icon: FiShield, t: 'Four permission tiers', d: 'read-only · write · sensitive · blocked — each handled differently.' },
+  { Icon: FiRotateCcw, t: 'Turn-bounded confirmation', d: 'The model can’t approve its own destructive call in one loop — closing a live prompt-injection hole.' },
+  { Icon: FiDollarSign, t: 'Financial block', d: 'Money and transfer keywords are denied outright, never negotiated.' },
+  { Icon: FiFolder, t: 'Fenced access', d: 'File access is allowlisted; shell commands run against a denylist.' },
+  { Icon: FiDatabase, t: 'Append-only audit', d: 'Every call is logged with its verdict to audit.jsonl. Gmail is read & draft, never send.' },
+]
+
+const SOLID = [
+  { t: '638 tests passing', d: 'The loop, the router, every integration, and the guard are covered.' },
+  { t: 'Offline-first voice', d: 'Wake, STT, TTS and a local Ollama tier work with no internet.' },
+  { t: 'The security gate', d: 'Audited, turn-bounded, fail-closed — not bolted on after.' },
+  { t: 'Cost-engineered', d: 'Cheapest capable model per request, under a hard $20/month cap.' },
+]
+
+const GROWING = [
+  { t: 'One machine', d: 'Runs on a single Windows PC today; multi-host is future work.' },
+  { t: 'Loopback only', d: 'The WebSocket has no auth — it stays bound to localhost, not the network.' },
+  { t: 'Google surfaces', d: 'Gmail and Calendar live on a branch, not yet on master.' },
+  { t: 'Pi voice-satellite', d: 'A remote mic puck is design intent, not shipped.' },
+]
+
+const STATS = [
+  { n: '638', l: 'tests' },
+  { n: '40+', l: 'tools' },
+  { n: '10', l: 'integrations' },
+  { n: '$20', l: '/ month cap' },
+]
 
 const StageIcon = { heard: FiMic, route: FiGitBranch, call: FiCpu, verdict: FiShield, result: FiZap, reply: FiVolume2 }
 const StageLabel = { heard: 'Heard · Whisper STT', route: 'Routed', call: 'Tool call', verdict: 'Security guard', result: 'Result', reply: 'Spoken · TTS' }
@@ -146,11 +173,7 @@ function Anatomy() {
     <div className="anatomy">
       <div className="cmd-chips">
         {COMMANDS.map((c, i) => (
-          <button
-            key={c.label}
-            className={`cmd-chip ${i === active ? 'on' : ''}`}
-            onClick={() => setActive(i)}
-          >
+          <button key={c.label} className={`cmd-chip ${i === active ? 'on' : ''}`} onClick={() => setActive(i)}>
             <FiMic /> {c.label}
           </button>
         ))}
@@ -170,9 +193,7 @@ function Anatomy() {
                 <div className="stage-label">{StageLabel[s.kind]}</div>
                 {s.kind === 'heard' && <div className="stage-heard">“{s.text}”</div>}
                 {s.kind === 'route' && (
-                  <div className="stage-route">
-                    → <code>{s.tier}</code> <span className="muted">· {s.why}</span>
-                  </div>
+                  <div className="stage-route">→ <code>{s.tier}</code> <span className="muted">· {s.why}</span></div>
                 )}
                 {s.kind === 'call' && (
                   <pre className="stage-json">{`${s.tool}(${JSON.stringify(s.input, null, 2)})`}</pre>
@@ -201,142 +222,237 @@ function Anatomy() {
   )
 }
 
+function useReveal() {
+  const ref = useRef(null)
+  useEffect(() => {
+    const els = ref.current?.querySelectorAll('[data-reveal]') || []
+    if (!('IntersectionObserver' in window)) { els.forEach((el) => el.classList.add('in')); return }
+    const io = new IntersectionObserver(
+      (es) => es.forEach((e) => e.isIntersecting && e.target.classList.add('in')),
+      { threshold: 0.12 },
+    )
+    els.forEach((el) => io.observe(el))
+    return () => io.disconnect()
+  }, [])
+  return ref
+}
+
+function Beat({ id, align = 'center', bare = false, eyebrow, children }) {
+  return (
+    <section className={`beat beat-${align}`} id={id}>
+      <div className={`panel ${bare ? 'bare' : ''}`} data-reveal>
+        {eyebrow && <div className="eyebrow">{eyebrow}</div>}
+        {children}
+      </div>
+    </section>
+  )
+}
+
+const BEAT_IDS = ['top', 'listen', 'act', 'reach', 'guard', 'state', 'open']
+
+function useActiveBeat() {
+  const beatRef = useRef(0)
+  useEffect(() => {
+    let raf = 0
+    const measure = () => {
+      raf = 0
+      const mid = window.innerHeight / 2
+      let best = 0, bd = Infinity
+      BEAT_IDS.forEach((id, i) => {
+        const el = document.getElementById(id)
+        if (!el) return
+        const r = el.getBoundingClientRect()
+        const d = Math.abs(r.top + r.height / 2 - mid)
+        if (d < bd) { bd = d; best = i }
+      })
+      beatRef.current = best
+    }
+    const onScroll = () => { if (!raf) raf = requestAnimationFrame(measure) }
+    measure()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    window.addEventListener('resize', onScroll)
+    return () => {
+      window.removeEventListener('scroll', onScroll)
+      window.removeEventListener('resize', onScroll)
+      if (raf) cancelAnimationFrame(raf)
+    }
+  }, [])
+  return beatRef
+}
+
 export default function App() {
   const ref = useReveal()
+  const progressRef = useScrollProgress()
+  const beatRef = useActiveBeat()
   return (
-    <div ref={ref}>
+    <div className="page" ref={ref}>
+      <div className="page-bg" />
+      <Orb progressRef={progressRef} beatRef={beatRef} />
+
       <header className="nav">
         <div className="container nav-inner">
           <a className="brand" href="#top"><span className="brand-mark"><FiMic /></span> JARVIS</a>
           <nav className="nav-links">
-            <a href="#anatomy">Anatomy</a>
-            <a href="#map">Integrations</a>
-            <a href="#start">Get started</a>
+            <a href="#act">The loop</a>
+            <a href="#reach">Reach</a>
+            <a href="#guard">The gate</a>
+            <a href="#open">Run it</a>
           </nav>
           <a className="btn btn-dark" href={LINKS.github} target="_blank" rel="noreferrer"><FiGithub /> GitHub</a>
         </div>
       </header>
 
-      {/* HERO */}
-      <section className="hero" id="top">
-        <div className="container hero-inner" data-reveal>
-          <div className="orb" aria-hidden="true">
-            <span className="orb-ring r3" />
-            <span className="orb-ring r2" />
-            <span className="orb-ring r1" />
-            <span className="orb-core" />
-            <span className="orb-wave"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
-          </div>
-          <span className="pill"><FiMic /> Always-on daemon · Claude tool-use</span>
-          <h1 className="hero-h1">I said “play Die For You.”<br /><span className="grad">It did the rest.</span></h1>
-          <p className="hero-sub">
-            JARVIS is a personal assistant I built on Claude’s tool-use loop. It hears a plain-language
-            request, routes it to the cheapest capable model, calls the right tool across my home, music,
-            TV and PC, then speaks back, and you can cut in any time. Here’s what happens when you talk to it.
-          </p>
-          <div className="cta-row">
-            <a className="btn btn-accent" href="#anatomy"><FiPlay /> See a command run</a>
-            <a className="btn btn-ghost" href={LINKS.github} target="_blank" rel="noreferrer"><FiGithub /> View on GitHub</a>
-          </div>
-          <div className="stack">
-            {['Python', 'Claude (Haiku + Sonnet)', 'local Ollama tier', 'Whisper STT', 'Home Assistant', '41 tools'].map((t) => (
-              <span key={t} className="tag">{t}</span>
-            ))}
-          </div>
-
-          <figure className="shot hero-shot">
-            <div className="shot-bar"><span /><span /><span /> clients.cli</div>
-            <img src="/cli.png" alt="A real JARVIS CLI session: play Die For You, open Firefox, and set a reminder" />
-          </figure>
+      {/* 00 — HERO */}
+      <Beat id="top" align="center" bare>
+        <span className="pill"><FiMic /> Always-on daemon · Claude tool-use</span>
+        <h1 className="hero-h1">A voice assistant that<br /><span className="grad">actually does things.</span></h1>
+        <p className="lead">
+          Not a chatbot — a daemon on Claude’s tool-use loop that controls real devices across my home,
+          music, TV and PC by voice. Each request routes to the cheapest capable model under a $20/month
+          budget, runs through a security gate, then speaks back — and you can cut in any time.
+        </p>
+        <div className="cta-row center">
+          <a className="btn btn-accent" href="#act"><FiPlay /> See a command run</a>
+          <a className="btn btn-ghost" href={LINKS.github} target="_blank" rel="noreferrer"><FiGithub /> View on GitHub</a>
         </div>
-      </section>
-
-      {/* ANATOMY */}
-      <section className="section alt" id="anatomy">
-        <div className="container">
-          <div className="section-head" data-reveal>
-            <h2 className="section-title">Anatomy of a command</h2>
-            <p className="section-sub">
-              Pick a command and watch it decompose: the real tool-call JSON, the read-only or write
-              guard verdict, and the spoken reply. This is the actual shape logged to <code>audit.jsonl</code>.
-            </p>
-          </div>
-          <div data-reveal><Anatomy /></div>
-
-          <figure className="shot" data-reveal style={{ marginTop: 30, maxWidth: 960, marginInline: 'auto' }}>
-            <div className="shot-bar"><span /><span /><span /> logs/audit.jsonl</div>
-            <div className="shot-scroll"><img src="/audit.png" alt="JARVIS audit log: each tool call recorded with a read-only or write verdict" /></div>
-            <figcaption className="shot-cap">Not a mockup: every tool call JARVIS makes is recorded with a read-only or write security verdict.</figcaption>
-          </figure>
+        <div className="stack">
+          {['Python', 'Claude (Haiku + Sonnet)', 'local Ollama tier', 'Whisper STT', 'Home Assistant', '40+ tools'].map((t) => (
+            <span key={t} className="tag">{t}</span>
+          ))}
         </div>
-      </section>
+        <div className="scroll-hint"><span>scroll</span><FiArrowRight className="down" /></div>
+      </Beat>
 
-      {/* INTEGRATION MAP */}
-      <section className="section" id="map">
-        <div className="container">
-          <div className="section-head" data-reveal>
-            <h2 className="section-title">What it’s wired into</h2>
-            <p className="section-sub">One assistant, one conversation, ten surfaces. Every tool below is real.</p>
-          </div>
-
-          <div className="hub" data-reveal>
-            <span className="hub-core"><FiMic /> JARVIS core · 41 tools</span>
-          </div>
-
-          <div className="map-grid">
-            {INTEGRATIONS.map((it, i) => (
-              <div className="map-card" data-reveal style={{ transitionDelay: `${i * 40}ms` }} key={it.name}>
-                <div className="map-head">
-                  <span className="map-ico"><it.Icon /></span>
-                  <span className="map-name">{it.name}</span>
-                  <span className="map-count">{it.tools.length}</span>
-                </div>
-                <div className="map-tools">
-                  {it.tools.map((t) => <code key={t}>{t}</code>)}
-                </div>
-                <div className="map-ex">{it.ex}</div>
-              </div>
-            ))}
-          </div>
-
-          <figure className="shot" data-reveal style={{ marginTop: 30, maxWidth: 860, marginInline: 'auto' }}>
-            <img src="/spotify.png" alt="Spotify playing Die For You by The Weeknd, started by JARVIS" />
-            <figcaption className="shot-cap">“Play Die For You by The Weeknd,” and it’s actually playing.</figcaption>
-          </figure>
-        </div>
-      </section>
-
-      {/* GET STARTED */}
-      <section className="section alt" id="start">
-        <div className="container start-grid">
-          <div data-reveal>
-            <h2 className="section-title">Run your own</h2>
-            <p className="section-sub">
-              The brain (<code>jarvisd</code>) binds to localhost and talks to thin voice/CLI clients.
-              Add your keys, run, and say “hey jarvis.” Full setup is in the docs.
-            </p>
-            <div className="cta-row">
-              <a className="btn btn-accent" href={LINKS.github} target="_blank" rel="noreferrer"><FiGithub /> View on GitHub</a>
-              <a className="btn btn-ghost" href={LINKS.docs} target="_blank" rel="noreferrer"><FiBookOpen /> Documentation</a>
+      {/* 01 — LISTEN */}
+      <Beat id="listen" align="left" eyebrow="01 — Voice">
+        <h2 className="beat-h2">It listens, and you can cut in.</h2>
+        <p className="beat-sub">
+          The whole voice path is built to feel like talking to a person who’s paying attention —
+          local when it can be, and interruptible always.
+        </p>
+        <div className="feat-grid">
+          {LISTEN.map((f) => (
+            <div className="feat" key={f.t}>
+              <span className="feat-ico"><f.Icon /></span>
+              <div><div className="feat-t">{f.t}</div><div className="feat-d">{f.d}</div></div>
             </div>
+          ))}
+        </div>
+      </Beat>
+
+      {/* 02 — ACT */}
+      <Beat id="act" align="wide" eyebrow="02 — The loop">
+        <h2 className="beat-h2">Hears you. Picks the cheapest model that can do it. Acts.</h2>
+        <p className="beat-sub">
+          Every request runs the same loop: route to the cheapest capable tier (local Ollama → Haiku →
+          Sonnet) under a hard $20/month budget, call the right tools, speak the result. Pick a command
+          and watch it decompose — real tool-call JSON, the guard verdict, the spoken reply. This is the
+          actual shape logged to <code>audit.jsonl</code>.
+        </p>
+        <Anatomy />
+        <figure className="shot">
+          <div className="shot-bar"><span /><span /><span /> clients.cli</div>
+          <img src="/cli.png" alt="A real JARVIS CLI session: play Die For You, open Firefox, and set a reminder" />
+          <figcaption className="shot-cap">A real session — not a mockup.</figcaption>
+        </figure>
+      </Beat>
+
+      {/* 03 — REACH */}
+      <Beat id="reach" align="wide" eyebrow="03 — Reach">
+        <h2 className="beat-h2">One conversation. Ten surfaces.</h2>
+        <p className="beat-sub">40+ tools across 10 integrations. Every tool below is real.</p>
+        <div className="map-grid">
+          {INTEGRATIONS.map((it, i) => (
+            <div className="map-card" style={{ transitionDelay: `${i * 30}ms` }} key={it.name}>
+              <div className="map-head">
+                <span className="map-ico"><it.Icon /></span>
+                <span className="map-name">{it.name}</span>
+                <span className="map-count">{it.tools.length}</span>
+              </div>
+              <div className="map-tools">{it.tools.map((t) => <code key={t}>{t}</code>)}</div>
+              <div className="map-ex">{it.ex}</div>
+            </div>
+          ))}
+        </div>
+        <figure className="shot narrow">
+          <img src="/spotify.png" alt="Spotify playing Die For You by The Weeknd, started by JARVIS" />
+          <figcaption className="shot-cap">“Play Die For You by The Weeknd,” and it’s actually playing.</figcaption>
+        </figure>
+      </Beat>
+
+      {/* 04 — GUARD */}
+      <Beat id="guard" align="right" eyebrow="04 — The gate">
+        <h2 className="beat-h2">Every action goes through one gate.</h2>
+        <p className="beat-sub">
+          An assistant that can act on your behalf needs a choke-point. JARVIS has exactly one, and
+          everything funnels through it.
+        </p>
+        <div className="feat-grid">
+          {GUARD.map((f) => (
+            <div className="feat" key={f.t}>
+              <span className="feat-ico"><f.Icon /></span>
+              <div><div className="feat-t">{f.t}</div><div className="feat-d">{f.d}</div></div>
+            </div>
+          ))}
+        </div>
+        <figure className="shot">
+          <div className="shot-bar"><span /><span /><span /> logs/audit.jsonl</div>
+          <div className="shot-scroll"><img src="/audit.png" alt="JARVIS audit log: each tool call recorded with a read-only or write verdict" /></div>
+          <figcaption className="shot-cap">Every tool call, recorded with its verdict.</figcaption>
+        </figure>
+      </Beat>
+
+      {/* 05 — STATE */}
+      <Beat id="state" align="wide" eyebrow="05 — Honest state">
+        <h2 className="beat-h2">What’s solid, and what’s still growing.</h2>
+        <div className="stat-row">
+          {STATS.map((s) => (
+            <div className="stat" key={s.l}><div className="stat-n">{s.n}</div><div className="stat-l">{s.l}</div></div>
+          ))}
+        </div>
+        <div className="two-col">
+          <div className="col-card solid">
+            <div className="col-head"><FiCheck /> Solid</div>
+            {SOLID.map((x) => (
+              <div className="col-row" key={x.t}><div className="col-t">{x.t}</div><div className="col-d">{x.d}</div></div>
+            ))}
           </div>
-          <div className="code" data-reveal>
-            <div className="code-bar"><span /><span /><span /> setup</div>
-            <pre>
+          <div className="col-card growing">
+            <div className="col-head"><FiAlertTriangle /> Still growing</div>
+            {GROWING.map((x) => (
+              <div className="col-row" key={x.t}><div className="col-t">{x.t}</div><div className="col-d">{x.d}</div></div>
+            ))}
+          </div>
+        </div>
+      </Beat>
+
+      {/* 06 — OPEN */}
+      <Beat id="open" align="center" eyebrow="06 — Run it">
+        <h2 className="beat-h2">Run your own.</h2>
+        <p className="lead">
+          The brain (<code>jarvisd</code>) binds to localhost and talks to thin voice and CLI clients.
+          Add your keys, run it, and say “hey jarvis.” It’s MIT-licensed.
+        </p>
+        <div className="code">
+          <div className="code-bar"><span /><span /><span /> setup</div>
+          <pre>
 {`pip install -r requirements.txt
 cp .env.example .env     # ANTHROPIC_API_KEY, HA_TOKEN, ...
 
 python -m jarvisd              # the brain (localhost:8765)
 python -m clients.voice_client # "hey jarvis" voice mode`}
-            </pre>
-          </div>
+          </pre>
         </div>
-      </section>
+        <div className="cta-row center">
+          <a className="btn btn-accent" href={LINKS.github} target="_blank" rel="noreferrer"><FiGithub /> View on GitHub</a>
+          <a className="btn btn-ghost" href={LINKS.docs} target="_blank" rel="noreferrer"><FiBookOpen /> Documentation</a>
+        </div>
+      </Beat>
 
       <footer className="footer">
         <div className="container footer-inner">
-          <span><FiMic /> JARVIS</span>
-          <span>Built by Akshit Kartik · {new Date().getFullYear()}</span>
+          <span className="brand"><span className="brand-mark"><FiMic /></span> JARVIS</span>
+          <span className="muted">Built by Akshit Kartik · {new Date().getFullYear()} · MIT</span>
         </div>
       </footer>
     </div>

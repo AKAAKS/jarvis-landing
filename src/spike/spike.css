@@ -1,0 +1,40 @@
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body { background: #15120e; }
+
+.spk { position: relative; color: #f6f4f2; font-family: 'Sora', system-ui, sans-serif; }
+
+/* warm charcoal field + gold ambient glow, behind the transparent canvas */
+.spk-bg {
+  position: fixed; inset: 0; z-index: 0;
+  background:
+    radial-gradient(60% 50% at 50% 46%, rgba(255, 150, 40, 0.10), transparent 70%),
+    radial-gradient(120% 90% at 50% 120%, rgba(255, 110, 30, 0.05), transparent 60%),
+    linear-gradient(180deg, #1b1712, #141009 70%);
+}
+.orb-canvas { position: fixed !important; inset: 0; z-index: 1; pointer-events: none; }
+
+.spk-top {
+  position: fixed; top: 16px; left: 50%; transform: translateX(-50%); z-index: 3;
+  font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.22em;
+  text-transform: uppercase; color: rgba(255, 220, 170, 0.6);
+}
+
+.spk-sec {
+  position: relative; z-index: 2;
+  min-height: 100vh; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; text-align: center; padding: 24px;
+  pointer-events: none;
+}
+.spk-sec h1 { font-size: clamp(40px, 8vw, 92px); margin: 0; letter-spacing: -0.02em;
+  text-shadow: 0 0 40px rgba(255, 160, 50, 0.25); }
+.spk-sec h2 { font-size: clamp(30px, 6vw, 64px); margin: 0; letter-spacing: -0.02em; }
+.spk-sec p { color: #cbb89c; font-family: 'JetBrains Mono', monospace; font-size: 14px; margin-top: 14px; }
+.spk-tag {
+  margin-top: 18px; font-family: 'JetBrains Mono', monospace; font-size: 11px;
+  letter-spacing: 0.18em; text-transform: uppercase; color: #ffb64d;
+  border: 1px solid rgba(255, 182, 77, 0.35); border-radius: 999px; padding: 6px 14px;
+}
+.spk-sec.end { min-height: 60vh; }
