@@ -82,6 +82,30 @@ const clamp01 = (v) => Math.min(1, Math.max(0, v))
 //                  which is what the full-width beats need. 0.84 was not
 //                  enough — the glow spills past the geometry, and the limb
 //                  was just reaching the honest-state beat's left column.
+//   |edge| 0.70 -> Used by `act` alone, because it is the one wide beat whose
+//                  CONTENT is not actually wide. Only the h2 runs the full
+//                  width (to 91.4%); the pipeline and its chip row stop at
+//                  68.9% and the sub-heading near 56%. So the orb comes in
+//                  until it just clears the pipeline, and the one thing it
+//                  ends up behind is a 46px bold heading, which is strong
+//                  enough to take it. `reach` and `state` cannot do this:
+//                  their register and tables really do span the container, so
+//                  they stay at 0.90.
+//
+//                  0.70 is set from the NARROW end, not the wide one. The
+//                  pipeline is a fixed 860px, so the share of the screen it
+//                  occupies GROWS as the window shrinks — measured 68.9% at
+//                  1425px but 74.9% at 1185px — while a fixed edge fraction
+//                  stays put. Tuned at 1425px alone it reads as 0.56, and
+//                  that then overlaps the Replay control on a smaller
+//                  monitor.
+//
+// NOTE ON THE SPILL: `edge` is NOMINAL, from GLOBE_R = 2. The drawn orb runs
+// about 7 points of screen width wider than that on each side — nodes sit out
+// to radius*1.03, the rings sit outside them, and Bloom spreads further again.
+// So an edge of 0.56 (nominal 78% across) actually starts drawing near 71%.
+// Budget for that when tuning these; it is why 0.84 was not enough for the
+// wide beats and 0.90 is.
 //
 // THE PATH: one traverse down the page, with a single reversal. The old path
 // reversed three times, twice sweeping the orb across the middle of the screen
@@ -98,7 +122,7 @@ const GLOBE_R = 2 // buildGlobe's default radius, before SCALES is applied
 const OFFSETS = [
   [0.18, 0.18],   // 0 hero   — column left, orb whole on the right, high
   [0.18, -0.05],  // 1 listen — same side, settling: one object carried down
-  [0.90, -0.28],  // 2 act    — wide column, so only the limb stays in frame
+  [0.70, -0.28],  // 2 act    — see note below: comes well inside
   [0.90, -0.10],  // 3 reach  — stays out right
   [-0.18, 0.02],  // 4 guard  — THE reversal. Column right, orb whole on left
   [-0.90, -0.22], // 5 state  — continues left, limb only

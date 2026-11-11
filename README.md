@@ -69,6 +69,15 @@ you add a surface, only the array changes.
   centre still lets the orb eat further into the column as the window narrows.
   `x = sign * (|edge| * halfWidth + radius)`, resolved against the measured
   viewport each frame.
+- **`edge` is nominal; the drawn orb is wider.** Nodes sit out to `radius*1.03`,
+  the rings sit outside them and Bloom spreads further again — about 7 points of
+  screen width past `GLOBE_R` at 16:9, and MORE as the viewport narrows. Budget
+  for it when tuning.
+- **Tune a wide beat's edge at the NARROW end of the range.** The pipeline is a
+  fixed 860px, so the share of the screen it occupies grows as the window
+  shrinks (68.9% at 1425px, 74.9% at 1185px) while the orb's edge fraction
+  stays put. A value tuned only on a big monitor overlaps content on a smaller
+  one.
 - **Interpolate the resolved x values, never `edge` itself.** `edge` passes
   through zero at the crossing and `Math.sign(0)` would snap the orb by a whole
   radius.
