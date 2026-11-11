@@ -4,20 +4,39 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="description" content="JARVIS, a voice and text assistant that runs your home, built on Claude tool-use." />
+    <meta name="theme-color" content="#141009" />
+
+    <title>JARVIS · Your home, by voice</title>
+    <meta name="description" content="JARVIS is a daemon on Claude's tool-use loop that runs my lights, music, TV and PC by voice. 72 tools, a routing budget, and one security gate every call passes through." />
+
     <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://jarvis-landing-sooty.vercel.app/" />
     <meta property="og:title" content="JARVIS · Your home, by voice" />
-    <meta property="og:description" content="A personal assistant built on Claude tool-use that runs your home, music, TV, and PC, with interruptible voice." />
-    <meta name="twitter:card" content="summary" />
+    <meta property="og:description" content="A daemon on Claude's tool-use loop that runs my lights, music, TV and PC by voice. 72 tools, a routing budget, and one security gate every call passes through." />
+    <!-- Photographed from the real landing frame by `npm run og`, not redrawn.
+         A hand-built card is a second drawing of the same thing and drifts from
+         the first one silently; a photograph of the page cannot disagree with
+         it. Regenerate whenever the hero changes. -->
+    <meta property="og:image" content="https://jarvis-landing-sooty.vercel.app/og.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="The JARVIS landing page: the headline 'I talk to my house and it answers' over a glowing particle orb on warm charcoal." />
+
+    <!-- summary_large_image, not summary: plain `summary` crops to a small
+         square and throws away the composition the card exists for. -->
+    <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="JARVIS · Your home, by voice" />
-    <meta name="twitter:description" content="A personal assistant built on Claude tool-use that runs your home, music, TV, and PC." />
+    <meta name="twitter:description" content="A daemon on Claude's tool-use loop that runs my lights, music, TV and PC by voice." />
+    <meta name="twitter:image" content="https://jarvis-landing-sooty.vercel.app/og.png" />
+
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- Sora 600/700/800 only: those are the three weights the CSS actually
+         uses. It previously also pulled 500, which nothing set. -->
     <link
-      href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
       rel="stylesheet"
     />
-    <title>JARVIS · Your home, by voice</title>
   </head>
   <body>
     <div id="root"></div>

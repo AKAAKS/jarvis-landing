@@ -10,19 +10,49 @@ import { usePrefersReducedMotion, useIsMobile } from './hooks'
 
 const clamp01 = (v) => Math.min(1, Math.max(0, v))
 
-// Per-beat screen offset (world units): push the orb to the open side so the
-// morphing core peeks beside each panel. hero/open centred; side beats opposite
-// their panel; wide beats drift up-and-out so a crescent of the core shows.
-// Horizontal axis only — centre / left / right per section, no vertical drift.
+// Per-beat orb placement. The orb is an instrument standing BESIDE the content,
+// never a surface the content sits on, so every value here is derived from how
+// much room the beat's panel leaves rather than chosen by eye.
+//
+// Geometry: camera is fov 45 at z=6, so the visible half-width at the orb's
+// plane is tan(22.5°) * 6 = 2.49 world units per unit of aspect. At a 16:9
+// desktop viewport that is ~4.4 world units from centre to either edge. The
+// globe's radius is 2 and its bright core sits within ~1.1.
+//
+//   x = ±2.4  -> core centred in the free half of a half-width beat (1/4 beats)
+//   x = ±6.5  -> core is fully off-frame and only the outer globe's limb
+//                crosses the edge; this is what wide beats need, because a wide
+//                panel spans the full column and has no free half.
+//
+// The old values used +4.4/+4.6 for the wide beats, which put the core exactly
+// on the right-hand content: the $20 stat tile, the "Still growing" column and
+// the setup code block were all sitting on the brightest part of the orb.
 const OFFSETS = [
-  [0, 0],     // 0 hero   — centre
-  [2.6, 0],   // 1 listen — text left, orb right
-  [4.4, 0],   // 2 act    — wide: dock right
-  [4.6, 0],   // 3 reach  — wide: dock right
-  [-2.6, 0],  // 4 guard  — text right, orb left
-  [4.4, 0],   // 5 state  — wide: dock right
-  [0, 0],     // 6 open   — centre
+  [0, 2.8],    // 0 hero   — core lifted so it crowns the frame: the camera's
+               //            visible half-height is tan(22.5 deg)*6 = 2.49 world
+               //            units, and the core's radius is ~1.1, so at +2.8
+               //            the core spans 1.7..3.9 and only its lower edge
+               //            (1.7..2.49, the top ~16% of the frame) is on
+               //            screen. The h1 sits below that against the sparse
+               //            outer limb. At +3.6 the whole orb cleared the top
+               //            edge and a short viewport — the 630px og frame —
+               //            showed nothing but the opaque nav.
+  [2.4, 0],    // 1 listen — panel left, orb in the free right half
+  [6.5, 0],    // 2 act    — wide: limb only
+  [6.5, 0],    // 3 reach  — wide: limb only
+  [-2.4, 0],   // 4 guard  — panel right, orb in the free left half
+  [6.5, 0],    // 5 state  — wide: limb only
+  [0, -4.0],   // 6 open   — dropped below the setup block and cropped by the
+               //            bottom of the frame. This beat is the call to
+               //            action and its commands must be copyable at a
+               //            glance; it was previously the worst collision on
+               //            the page.
 ]
+
+// Mobile: panels are full-width, so there is no free half to stand in and any
+// horizontal offset just slides the core under the text. Park the orb above the
+// content instead and let it sit mostly off the top of the frame.
+const MOBILE_OFFSET = [0, 4.2]
 
 function attr(geo, data, name, size) {
   geo.setAttribute(name, new THREE.BufferAttribute(data, size))
@@ -93,7 +123,13 @@ function Globe({ progressRef, beatRef, reduce, isMobile }) {
     // ---- central morphing mind-core ----
     const core = buildCore(isMobile ? 1800 : 2800)
     const coreGeo = new THREE.BufferGeometry()
-    attr(coreGeo, core.shapes[0].slice(), 'position', 3) // placeholder, unused in shader
+    // LOAD-BEARING, despite the shader never reading it. three.js derives the
+    // draw count from geometry.attributes.position, and renderBufferDirect
+    // early-returns when it is undefined — delete this and the core silently
+    // stops rendering while the outer globe keeps working. (Tried it. The orb
+    // looked fine on the wide beats, where the core is off-frame anyway, and
+    // only the guard beat gave it away.)
+    attr(coreGeo, core.shapes[0].slice(), 'position', 3)
     attr(coreGeo, core.shapes[0].slice(), 'aFrom', 3)
     attr(coreGeo, core.shapes[1].slice(), 'aTo', 3)
     attr(coreGeo, core.aRnd, 'aRnd', 1)
@@ -152,10 +188,13 @@ function Globe({ progressRef, beatRef, reduce, isMobile }) {
     g.rotation.y = spinY.current + p * 2.4
     g.rotation.x = Math.sin(t * 0.1) * 0.05 + p * 0.3
 
-    // --- move the orb to the open side of each beat so the core stays visible ---
+    // --- stand the orb beside the beat's content, never behind it ---
+    // This used to be `const k = isMobile ? 0 : 1`, which pinned the orb dead
+    // centre on mobile — i.e. directly behind every heading and paragraph on
+    // the narrowest screens, the worst case rather than the safe one.
     const bi = beatRef ? Math.max(0, Math.min(OFFSETS.length - 1, beatRef.current)) : 0
-    const k = isMobile ? 0 : 1 // on mobile the panels are full-width; keep it centred
-    target.current.set(OFFSETS[bi][0] * k, OFFSETS[bi][1] * k, 0)
+    const off = isMobile ? MOBILE_OFFSET : OFFSETS[bi]
+    target.current.set(off[0], off[1], 0)
     g.position.lerp(target.current, Math.min(1, delta * 3))
 
     // --- outer globe reacts more between sections ---

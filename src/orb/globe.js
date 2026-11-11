@@ -5,8 +5,13 @@
  *
  * Returns typed-array attribute sets for three <points> / <lineSegments>. */
 
+import { mulberry32, ORB_SEED } from './rng.js'
+
 const TAU = Math.PI * 2
 const GOLDEN = Math.PI * (3 - Math.sqrt(5))
+
+// Seeded: the globe must be the same object on every load. See rng.js.
+let rnd = mulberry32(ORB_SEED)
 
 function fib(i, n) {
   const y = 1 - (i / (n - 1)) * 2
@@ -14,7 +19,7 @@ function fib(i, n) {
   const t = GOLDEN * i
   return [Math.cos(t) * r, y, Math.sin(t) * r]
 }
-const g3 = () => Math.random() + Math.random() + Math.random() - 1.5 // ~gaussian
+const g3 = () => rnd() + rnd() + rnd() - 1.5 // ~gaussian
 
 function ringPoint(a, rad, tiltX, tiltY) {
   let x = Math.cos(a) * rad, y = Math.sin(a) * rad, z = 0
@@ -27,11 +32,14 @@ function ringPoint(a, rad, tiltX, tiltY) {
 }
 
 export function buildGlobe({ radius = 2, clusters = 24, nodesPerCluster = 55, rings = 7 } = {}) {
+  // Reset per build so a desktop->mobile rebuild yields the same globe, not a
+  // continuation of the desktop stream.
+  rnd = mulberry32(ORB_SEED)
   const centers = []
   const phases = []
   for (let c = 0; c < clusters; c++) {
     centers.push(fib(c, clusters))
-    phases.push([Math.random() * TAU, Math.random() * TAU, Math.random() * TAU])
+    phases.push([rnd() * TAU, rnd() * TAU, rnd() * TAU])
   }
 
   // ---- nodes ----
@@ -42,7 +50,7 @@ export function buildGlobe({ radius = 2, clusters = 24, nodesPerCluster = 55, ri
     nPos.push(x, y, z)
     nPhase.push(phases[c][0], phases[c][1], phases[c][2])
     nScale.push(scale)
-    nRnd.push(Math.random())
+    nRnd.push(rnd())
     nDrift.push(1)
   }
   for (let c = 0; c < clusters; c++) {
@@ -52,8 +60,8 @@ export function buildGlobe({ radius = 2, clusters = 24, nodesPerCluster = 55, ri
       const s = 0.26
       let x = ctr[0] + g3() * s, y = ctr[1] + g3() * s, z = ctr[2] + g3() * s
       const L = Math.hypot(x, y, z) || 1
-      const rr = radius * (0.97 + Math.random() * 0.06)
-      addNode((x / L) * rr, (y / L) * rr, (z / L) * rr, c, 0.7 + Math.random() * 0.6)
+      const rr = radius * (0.97 + rnd() * 0.06)
+      addNode((x / L) * rr, (y / L) * rr, (z / L) * rr, c, 0.7 + rnd() * 0.6)
     }
   }
 
@@ -74,7 +82,7 @@ export function buildGlobe({ radius = 2, clusters = 24, nodesPerCluster = 55, ri
       const j = near[m][1]
       if (j < i) continue // unique pair
       const b = nodes[j]
-      const r = Math.random()
+      const r = rnd()
       lPos.push(a.x, a.y, a.z, b.x, b.y, b.z)
       lPhase.push(phases[a.c][0], phases[a.c][1], phases[a.c][2], phases[b.c][0], phases[b.c][1], phases[b.c][2])
       lRnd.push(r, r)
@@ -92,10 +100,10 @@ export function buildGlobe({ radius = 2, clusters = 24, nodesPerCluster = 55, ri
     for (let s = 0; s < segs; s++) {
       const p0 = ringPoint((s / segs) * TAU, rad, tiltX, tiltY)
       const p1 = ringPoint(((s + 1) / segs) * TAU, rad, tiltX, tiltY)
-      const rnd = Math.random()
+      const seg_r = rnd()
       rPos.push(p0[0], p0[1], p0[2], p1[0], p1[1], p1[2])
       rPhase.push(0, 0, 0, 0, 0, 0)
-      rRnd.push(rnd, rnd)
+      rRnd.push(seg_r, seg_r)
       rDrift.push(0, 0)
     }
   }
