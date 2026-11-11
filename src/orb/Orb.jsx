@@ -61,23 +61,77 @@ const clamp01 = (v) => Math.min(1, Math.max(0, v))
 //
 // Y drifts gently downward across the page so the traverse reads as a descent
 // rather than a slide along a rail.
+// X IS WHERE THE ORB'S INNER EDGE SITS, as a signed fraction of the visible
+// half-width — NOT where its centre sits.
+//
+// That distinction is the whole trick. The camera's visible HEIGHT is fixed at
+// +/-2.49 world units, but its visible WIDTH scales with the viewport's aspect
+// (about 11 units wide at 16:9, only 8 at 4:3). The globe's radius, though, is
+// a fixed world value. So positioning by centre-as-a-fraction still lets the
+// orb eat further into the column as the window narrows: at 1440x860 it was
+// crossing the whole right-hand column of the integration register.
+//
+// Anchoring the EDGE makes the gap hold at any aspect, because the radius is
+// added after the fraction is resolved against the measured viewport:
+//
+//   x = sign * (|edge| * halfWidth + radius)
+//
+//   |edge| 0.18 -> the orb's inner edge sits at 59% across, clear of the
+//                  600px reading column, which ends at ~51%
+//   |edge| 0.90 -> inner edge at 95% across: only the outer sliver is touched,
+//                  which is what the full-width beats need. 0.84 was not
+//                  enough — the glow spills past the geometry, and the limb
+//                  was just reaching the honest-state beat's left column.
+//
+// THE PATH: one traverse down the page, with a single reversal. The old path
+// reversed three times, twice sweeping the orb across the middle of the screen
+// behind whatever you were reading. It now enters right, exits right, crosses
+// once, and finishes left, with y drifting down so it reads as a descent.
+//
+// The crossing is at `guard` on purpose: the gate is where the daemon changes
+// its mind about a request, so it is the one place the orb changing sides
+// means something. It is also why `open` is right-aligned — bookending with
+// the orb back on the right would drag it across the full width behind the
+// closing content.
+const GLOBE_R = 2 // buildGlobe's default radius, before SCALES is applied
+
 const OFFSETS = [
-  [0.52, 0.18],   // 0 hero   — column left, orb whole on the right, high
-  [0.52, -0.05],  // 1 listen — same side, settling: one object carried down
-  [1.00, -0.28],  // 2 act    — wide column, so it slides out: limb only
-  [1.04, -0.10],  // 3 reach  — stays out right
-  [-0.52, 0.02],  // 4 guard  — THE reversal. Column right, orb whole on left
-  [-1.00, -0.22], // 5 state  — continues left, out past the edge
-  [-0.52, 0.08],  // 6 open   — returns from the left, no sweep back across
+  [0.18, 0.18],   // 0 hero   — column left, orb whole on the right, high
+  [0.18, -0.05],  // 1 listen — same side, settling: one object carried down
+  [0.90, -0.28],  // 2 act    — wide column, so only the limb stays in frame
+  [0.90, -0.10],  // 3 reach  — stays out right
+  [-0.18, 0.02],  // 4 guard  — THE reversal. Column right, orb whole on left
+  [-0.90, -0.22], // 5 state  — continues left, limb only
+  [-0.18, 0.08],  // 6 open   — returns from the left, no sweep back across
 ]
 
 const SCALES = [0.60, 0.60, 0.80, 0.80, 0.60, 0.80, 0.60]
 
+// Resolve one beat's placement to a world x. Done per beat and then
+// interpolated between the two RESULTS, never by interpolating `edge` itself:
+// edge passes through zero at the crossing, and sign(0) would snap the orb by
+// a whole radius.
+function edgeToX(edge, scale, halfW) {
+  const sign = edge < 0 ? -1 : 1
+  return sign * (Math.abs(edge) * halfW + GLOBE_R * scale)
+}
+
 // Mobile: the column is full-width, so there is no free half to stand in and
 // any horizontal offset slides the orb under the text. Park it above the
 // content and let it crop against the top of the frame.
-const MOBILE_OFFSET = [0, 3.0]
-const MOBILE_SCALE = 0.78
+// Sized and placed so the WHOLE orb is on screen, in a band of its own above
+// the headline. It used to sit at y 3.0 at scale 0.78 — radius 1.56, so only
+// its bottom unit cleared the top of the frame and it read as a severed half
+// stuck under the nav. Being big was costing it being an object.
+//
+// The camera's VERTICAL extent is fixed at +/-2.49 world units regardless of
+// viewport, so these convert to stable percentages of screen height:
+//   centre y 1.25 -> 24.9% down from the top
+//   radius 2*0.41 -> 16.5% of viewport height
+// i.e. the orb occupies 8.4%-41.3% of the screen, clear of the 56px nav, with
+// the hero's own padding-top (styles.css) holding the text below it.
+const MOBILE_OFFSET = [0, 1.25]
+const MOBILE_SCALE = 0.41
 
 // On a phone the orb cannot stand beside anything — the column is the whole
 // screen — so it steps back as you start reading instead of competing. It stays
@@ -88,8 +142,8 @@ const MOBILE_SCALE = 0.78
 // than the viewport, so the reader scrolls through the orb's band while still
 // on beat 0 — a per-beat gate leaves the limb sitting over the lead paragraph
 // for the whole first screenful.
-const MOBILE_DIM = 0.28
-const MOBILE_FADE_OVER = 0.6 // fraction of a viewport height to fade across
+const MOBILE_DIM = 0.14
+const MOBILE_FADE_OVER = 0.35 // fraction of a viewport height to fade across
 
 
 function attr(geo, data, name, size) {
@@ -245,9 +299,10 @@ function Globe({ progressRef, beatRef, reduce, isMobile }) {
     if (isMobile) {
       target.current.set(MOBILE_OFFSET[0], MOBILE_OFFSET[1], 0)
     } else {
-      const ox = OFFSETS[i0][0] + (OFFSETS[i1][0] - OFFSETS[i0][0]) * bf
+      const x0 = edgeToX(OFFSETS[i0][0], SCALES[i0], halfW)
+      const x1 = edgeToX(OFFSETS[i1][0], SCALES[i1], halfW)
       const oy = OFFSETS[i0][1] + (OFFSETS[i1][1] - OFFSETS[i0][1]) * bf
-      target.current.set(ox * halfW, oy, 0)
+      target.current.set(x0 + (x1 - x0) * bf, oy, 0)
     }
     // A light smoothing pass on top of an already-continuous target: it only
     // takes the edge off frame-to-frame scroll sampling, it is not what moves

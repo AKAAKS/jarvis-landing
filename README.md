@@ -62,11 +62,20 @@ you add a surface, only the array changes.
   `<Bloom>` pass fails under it and blanks the whole canvas, which looks like
   WebGL being off and sends you debugging the wrong thing.
 - **The orb stands beside content, never behind it.** `OFFSETS` in
-  `src/orb/Orb.jsx` are **fractions of the visible half-width**, not world
-  units. The camera's visible height is fixed but its visible width scales with
-  the viewport's aspect, so a world offset tuned on a 16:9 monitor slides off
-  frame entirely at 4:3. The value is multiplied by `state.viewport.width / 2`
-  each frame.
+  `src/orb/Orb.jsx` say where the orb's **inner edge** sits, as a signed
+  fraction of the visible half-width — not where its centre sits. The camera's
+  visible height is fixed but its visible width scales with the viewport's
+  aspect, while the globe's radius is a fixed world value, so positioning by
+  centre still lets the orb eat further into the column as the window narrows.
+  `x = sign * (|edge| * halfWidth + radius)`, resolved against the measured
+  viewport each frame.
+- **Interpolate the resolved x values, never `edge` itself.** `edge` passes
+  through zero at the crossing and `Math.sign(0)` would snap the orb by a whole
+  radius.
+- **On mobile the orb gets a band of its own** above the headline, sized to be
+  seen WHOLE (`MOBILE_SCALE` 0.41 at y 1.25 = 8.4%-41.3% of the viewport). It
+  used to be big and cropped, reading as a severed half stuck under the nav.
+  `#top.beat`'s mobile `padding-top` reserves that band and must move with it.
 - **Screenshots need `height: auto`.** Every `<img>` carries explicit width and
   height attributes for intrinsic sizing. Without `height: auto` the height
   ATTRIBUTE becomes the used height while `width: 100%` sets the width, and

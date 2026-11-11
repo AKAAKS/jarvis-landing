@@ -365,7 +365,11 @@ code, pre { font-family: var(--mono); }
   .beat { padding: 96px 20px 56px; min-height: auto; }
   .beat-left, .beat-right, .beat-wide, .beat-center { justify-content: flex-start; text-align: left; }
   .beat-left .panel, .beat-right .panel, .beat-wide .panel, .beat-center .panel { max-width: 100%; margin: 0; }
-  #top.beat { min-height: auto; padding-top: 86px; }
+  /* Reserve the band the orb stands in (8.4%-41.3% of the viewport, see
+     MOBILE_OFFSET in Orb.jsx) so the headline starts below it instead of
+     underneath it. Capped so a short landscape viewport does not push the
+     headline off the fold entirely. */
+  #top.beat { min-height: auto; padding-top: min(45vh, 330px); }
   .nav-links { display: none; }
   .feat-grid { grid-template-columns: 1fr; }
   .two-col { grid-template-columns: 1fr; }
