@@ -4,7 +4,7 @@ import {
   FiFolder, FiClock, FiZap, FiCpu, FiShield, FiVolume2,
   FiPlay, FiRotateCcw, FiCheck, FiDatabase, FiGitBranch, FiCoffee,
   FiLock, FiActivity, FiDollarSign, FiAlertTriangle,
-  FiMail, FiCalendar, FiCloud,
+  FiMail, FiCalendar, FiCloud, FiEyeOff,
 } from 'react-icons/fi'
 import Orb from './orb/Orb'
 import { useScrollProgress } from './orb/hooks'
@@ -156,6 +156,7 @@ const GUARD = [
   { Icon: FiFolder, t: 'Fenced access', d: 'File access is allowlisted; shell commands run against a denylist.' },
   { Icon: FiMail, t: 'Gmail reads and drafts', d: 'It can search, read and draft. It cannot send.' },
   { Icon: FiDatabase, t: 'Append-only audit', d: 'Every call is logged with its verdict to audit.jsonl.' },
+  { Icon: FiEyeOff, t: 'Secrets never hit the log', d: 'password, token, secret, api_key and credential are redacted, nested keys included, before the line is written.' },
 ]
 
 const SOLID = [
@@ -223,7 +224,7 @@ function Anatomy() {
 
   return (
     <div className="anatomy" ref={hostRef}>
-      <div className="cmd-chips">
+      <div className="cmd-chips ruled">
         {COMMANDS.map((c, i) => (
           <button key={c.label} className={`cmd-chip ${i === active ? 'on' : ''}`} onClick={() => setActive(i)}>
             <FiMic /> {c.label}
@@ -346,7 +347,7 @@ export default function App() {
       </header>
 
       {/* 00 — HERO */}
-      <Beat id="top" align="center" bare>
+      <Beat id="top" align="left" bare>
         <span className="pill"><FiMic /> Always‑on daemon · Claude tool‑use</span>
         <h1 className="hero-h1">I talk to my house<br /><span className="grad">and it answers.</span></h1>
         <p className="lead">
@@ -354,7 +355,7 @@ export default function App() {
           Every request picks the cheapest model that can handle it, passes a security gate that can
           refuse it, and speaks the result back. You can cut in mid-sentence.
         </p>
-        <div className="cta-row center">
+        <div className="cta-row">
           <a className="btn btn-accent" href="#act"><FiPlay /> See a command run</a>
           <a className="btn btn-ghost" href={LINKS.github} target="_blank" rel="noreferrer"><FiGithub /> View on GitHub</a>
         </div>
@@ -372,7 +373,7 @@ export default function App() {
           Wake word, speech and the default voice all run on the machine. Nothing is sent anywhere
           until “hey jarvis” fires.
         </p>
-        <div className="feat-grid">
+        <div className="feat-grid ruled">
           {LISTEN.map((f) => (
             <div className="feat" key={f.t}>
               <span className="feat-ico"><f.Icon /></span>
@@ -392,7 +393,7 @@ export default function App() {
         </p>
         <Anatomy />
         <figure className="shot">
-          <div className="shot-bar"><span /><span /><span /> clients.cli</div>
+          <div className="shot-bar">clients.cli</div>
           <img src="/cli.png" loading="lazy" decoding="async" width="745" height="285" alt="A real JARVIS CLI session: play Die For You, open Firefox, and set a reminder" />
           <figcaption className="shot-cap">A real session — not a mockup.</figcaption>
         </figure>
@@ -405,7 +406,7 @@ export default function App() {
           {TOOL_COUNT} tools across {INTEGRATIONS.length} surfaces. Every name below is a tool in the
           registry, spelled the way the code spells it.
         </p>
-        <div className="map-grid">
+        <div className="map-grid ruled">
           {INTEGRATIONS.map((it) => (
             <div className="map-card" key={it.name}>
               <div className="map-head">
@@ -417,8 +418,12 @@ export default function App() {
               <div className="map-ex">{it.ex}</div>
             </div>
           ))}
+          <div className="map-total">
+            <span className="map-total-n">{TOOL_COUNT}</span>
+            <span className="map-total-l">tools across {INTEGRATIONS.length} surfaces</span>
+          </div>
         </div>
-        <figure className="shot narrow">
+        <figure className="shot">
           <img src="/spotify.jpg" loading="lazy" decoding="async" width="1520" height="851" alt="Spotify playing Die For You by The Weeknd, started by JARVIS" />
           <figcaption className="shot-cap">“Play Die For You by The Weeknd,” and it’s actually playing.</figcaption>
         </figure>
@@ -431,7 +436,7 @@ export default function App() {
           An assistant that can act on your behalf needs a choke-point. JARVIS has exactly one, and
           everything funnels through it.
         </p>
-        <div className="feat-grid">
+        <div className="feat-grid ruled">
           {GUARD.map((f) => (
             <div className="feat" key={f.t}>
               <span className="feat-ico"><f.Icon /></span>
@@ -440,7 +445,7 @@ export default function App() {
           ))}
         </div>
         <figure className="shot">
-          <div className="shot-bar"><span /><span /><span /> logs/audit.jsonl</div>
+          <div className="shot-bar">logs/audit.jsonl</div>
           <div className="shot-scroll"><img src="/audit.png" loading="lazy" decoding="async" width="1905" height="375" alt="JARVIS audit log: each tool call recorded with a read-only or write verdict" /></div>
           <figcaption className="shot-cap">Every tool call, recorded with its verdict.</figcaption>
         </figure>
@@ -449,12 +454,12 @@ export default function App() {
       {/* 05 — STATE */}
       <Beat id="state" align="wide" eyebrow="05 — Honest state">
         <h2 className="beat-h2">What’s solid, and what’s still growing.</h2>
-        <div className="stat-row">
+        <div className="stat-row ruled">
           {STATS.map((s) => (
             <div className="stat" key={s.l}><div className="stat-n">{s.n}</div><div className="stat-l">{s.l}</div></div>
           ))}
         </div>
-        <div className="two-col">
+        <div className="two-col ruled">
           <div className="col-card solid">
             <div className="col-head"><FiCheck /> Solid</div>
             {SOLID.map((x) => (
@@ -471,14 +476,14 @@ export default function App() {
       </Beat>
 
       {/* 06 — OPEN */}
-      <Beat id="open" align="center" eyebrow="06 — Run it">
+      <Beat id="open" align="left" eyebrow="06 — Run it">
         <h2 className="beat-h2">Run your own.</h2>
         <p className="lead">
           The brain (<code>jarvisd</code>) binds to localhost and talks to thin voice and CLI clients.
           Add your keys, run it, and say “hey jarvis.” It’s MIT-licensed.
         </p>
         <div className="code">
-          <div className="code-bar"><span /><span /><span /> setup</div>
+          <div className="code-bar">setup</div>
           <pre>
 {`pip install -r requirements.txt
 cp .env.example .env     # ANTHROPIC_API_KEY, HA_TOKEN, ...
@@ -487,7 +492,7 @@ python -m jarvisd              # the brain (localhost:8765)
 python -m clients.voice_client # "hey jarvis" voice mode`}
           </pre>
         </div>
-        <div className="cta-row center">
+        <div className="cta-row">
           <a className="btn btn-accent" href={LINKS.github} target="_blank" rel="noreferrer"><FiGithub /> View on GitHub</a>
         </div>
       </Beat>

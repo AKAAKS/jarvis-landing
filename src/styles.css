@@ -1,53 +1,78 @@
 /* =============================================================================
-   JARVIS landing — warm charcoal + gold. One persistent WebGL orb (fixed,
-   behind), seven beats scrolling over it. Tokens first.
+   JARVIS landing
+
+   THE CONCEIT: the page is the daemon's own log, read top to bottom, with the
+   orb as the running process it describes.
+
+   That is not decoration, it is the thing that answers questions no "glowing
+   sci-fi orb" vibe could, and every rule below is derived from it:
+
+     What is a card?        A log frame. Square, one hairline rule, a mono key
+                            in its head. Not a rounded rect with a soft border.
+     What is a tag?         A token. Square, mono, unfilled. Not a pill.
+     How do sections join?  A labelled rule across the column: 02 ─ THE LOOP ──
+     What colour is a       None. A log is printed, not lit. The orb is the only
+       shadow?              emissive object on the page, because it is the only
+                            thing that is actually running.
+     What does hover do?    Brightens the frame's rule, the way a selected row
+                            in a log reader does. It does not lift or float.
+     Where does colour go?  Only where the daemon has a state: live, the model
+                            tier, the guard's verdict. Nowhere else.
+
+   Geometry is square throughout (--radius: 0). This is the single load-bearing
+   decision in the file — the previous pass kept 999px pills and 13px rounded
+   cards, and that alone was enough to keep the page looking like every other
+   generated landing page, no matter what the colours did.
 ============================================================================= */
-/* Tokens are named for the job they do, not the colour they are. The page is
+
+/* Tokens are named for the job they do, not the colour they are. The page stays
  * warm and emissive because the thing it describes is a daemon that is always
- * awake and glowing — that is kept. What changed is that a new colour now has
- * to declare what it signals before it can be added.
+ * awake — that is kept. What changed is that a new colour now has to declare
+ * what it signals before it can be added.
  *
- * Contrast measured against --surface (#15110b), the colour every text token
- * actually sits on now that content no longer floats over the orb. WCAG AA for
- * body text is 4.5:1, for large text 3:1.
+ * Contrast measured against --surface (#15110b). WCAG AA is 4.5:1 for body
+ * text, 3:1 for large text.
  */
 :root {
   /* --- ground --------------------------------------------------------- */
   --void: #141009;        /* the page behind everything */
-  --void-2: #1b1712;      /* top of the field gradient */
-  --surface: #15110b;     /* any panel content is read off */
-  --surface-2: #1d1811;   /* a panel raised off another panel */
+  --surface: #15110b;     /* any frame content is read off */
+  --surface-2: #1b1610;   /* a frame's head, one step up from its body */
 
   /* --- text ----------------------------------------------------------- */
   --ink: #f6f4f2;         /* 15.8:1 on --surface */
-  --ink-dim: #cbb89c;     /* 8.9:1  — secondary prose */
-  --ink-faint: #a59376;   /* 5.8:1  — labels, captions, units */
+  --ink-dim: #cbb89c;     /*  8.9:1 — secondary prose */
+  --ink-faint: #a59376;   /*  5.8:1 — keys, captions, units */
 
-  /* --- signal: what the daemon is doing ------------------------------- */
-  --live: #ffcf5a;        /* awake / listening / the one thing that glows */
-  --accent: #ff9a2e;      /* section markers, examples, emphasis */
+  /* --- signal: what the daemon is doing -------------------------------- */
+  --live: #ffcf5a;           /* awake / listening / the only thing that glows */
+  --accent: #ff9a2e;         /* section markers, spoken examples */
   --tier-escalated: #ff5e3a; /* the sonnet tier: the expensive path */
 
-  /* --- signal: what the guard decided ---------------------------------- */
+  /* --- signal: what the guard decided ----------------------------------- */
   --verdict-pass: #9fe6b0;   /* read_only, auto-passed */
   --verdict-write: #ffcf5a;  /* changes state, policy-checked */
 
-  /* --- structure ------------------------------------------------------- */
-  --rule: rgba(255, 200, 140, 0.14);   /* a faint division */
-  --rule-hard: rgba(255, 200, 140, 0.26); /* a real edge */
+  /* --- structure -------------------------------------------------------- */
+  --rule: rgba(255, 200, 140, 0.16);      /* a faint division */
+  --rule-hard: rgba(255, 200, 140, 0.30); /* a real edge */
   --live-glow: rgba(255, 160, 50, 0.22);  /* spent ONLY on --live things */
 
   --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
   --sans: 'Sora', system-ui, sans-serif;
   --body: 'Inter', system-ui, sans-serif;
 
-  --radius: 16px;
-  --maxw: 1120px;
+  /* Square. A readout has no rounded corners. Declared as a token so that
+     "soften it a bit" has to be a decision made in one place, not a value
+     nudged onto one component. */
+  --radius: 0;
+  --maxw: 1180px;
+  --col: 600px;           /* the reading column on half-width beats */
   color-scheme: dark;
 }
 
 * { box-sizing: border-box; }
-html { scroll-behavior: smooth; scroll-padding-top: 62px; } /* = nav height */
+html { scroll-behavior: smooth; scroll-padding-top: 56px; } /* = nav height */
 html, body { margin: 0; padding: 0; }
 body {
   background: var(--void);
@@ -60,238 +85,298 @@ a { color: inherit; text-decoration: none; }
 code, pre { font-family: var(--mono); }
 .muted { color: var(--ink-dim); }
 
-/* ---- fixed background field + orb canvas (behind everything) ---- */
+/* ---- fixed field + orb canvas (behind everything) ---- */
 .page { position: relative; z-index: 0; }
 .page-bg {
   position: fixed; inset: 0; z-index: 0; pointer-events: none;
   background:
-    radial-gradient(60% 50% at 50% 42%, rgba(255, 150, 40, 0.10), transparent 70%),
-    radial-gradient(120% 90% at 50% 120%, rgba(255, 110, 30, 0.05), transparent 60%),
+    radial-gradient(55% 45% at 72% 42%, rgba(255, 150, 40, 0.09), transparent 70%),
     linear-gradient(180deg, #1b1712, #141009 70%);
 }
 .orb-canvas { position: fixed !important; inset: 0; z-index: 1; pointer-events: none; }
-
-/* everything above the orb */
 .nav, .beat, .footer { position: relative; z-index: 2; }
 
-.container { width: 100%; max-width: var(--maxw); margin-inline: auto; padding-inline: 24px; }
+.container { width: 100%; max-width: var(--maxw); margin-inline: auto; padding-inline: 28px; }
 
-/* ---------------------------------------------------------------- nav ---- */
+/* ================================================================== nav ====
+   A log reader's title bar: flat, square, hairline-ruled, no blur. */
 .nav {
   position: fixed; top: 0; left: 0; right: 0; z-index: 20;
   background: var(--void);
   border-bottom: 1px solid var(--rule);
 }
-.nav-inner { display: flex; align-items: center; justify-content: space-between; height: 62px; }
-.brand { display: inline-flex; align-items: center; gap: 10px; font-family: var(--sans); font-weight: 800; letter-spacing: 0.04em; }
+.nav-inner { display: flex; align-items: center; gap: 28px; height: 56px; }
+.brand {
+  display: inline-flex; align-items: center; gap: 9px;
+  font-family: var(--mono); font-weight: 500; font-size: 13px; letter-spacing: 0.18em;
+}
+/* The brand mark is the one glowing thing in the chrome, because it stands for
+   the daemon being up. Square, like everything else. */
 .brand-mark {
-  display: grid; place-items: center; width: 30px; height: 30px; border-radius: 9px;
-  background: radial-gradient(circle at 35% 30%, var(--live), var(--accent));
-  color: #1a1206; box-shadow: 0 0 18px var(--live-glow);
+  display: grid; place-items: center; width: 22px; height: 22px;
+  background: var(--live); color: #1a1206;
+  box-shadow: 0 0 14px var(--live-glow);
 }
-.nav-links { display: flex; gap: 26px; font-size: 14px; color: var(--ink-dim); }
-.nav-links a:hover { color: var(--ink); }
+.nav-links { display: flex; gap: 22px; margin-left: auto; font-family: var(--mono); font-size: 12px; color: var(--ink-faint); }
+.nav-links a { padding: 4px 0; border-bottom: 1px solid transparent; }
+.nav-links a:hover { color: var(--live); border-bottom-color: var(--live); }
 
-/* -------------------------------------------------------------- buttons -- */
+/* ============================================================== buttons ====
+   Square, hairline. The filled one is --live because the primary action is
+   "watch the thing run". */
 .btn {
-  display: inline-flex; align-items: center; gap: 8px; font-weight: 600; font-size: 14px;
-  padding: 11px 18px; border-radius: 999px; border: 1px solid transparent; cursor: pointer;
-  transition: border-color 0.2s ease, background 0.2s ease;
+  display: inline-flex; align-items: center; gap: 9px;
+  font-family: var(--mono); font-size: 12.5px; letter-spacing: 0.06em;
+  padding: 11px 18px; border-radius: var(--radius);
+  border: 1px solid var(--rule-hard); background: none; color: var(--ink);
+  cursor: pointer; transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
 }
-.btn:hover { border-color: var(--live); }
-.btn-accent { background: var(--live); color: #1a1206; }
-.btn-ghost { background: rgba(255, 255, 255, 0.04); border-color: var(--rule-hard); color: var(--ink); }
-.btn-ghost:hover { background: rgba(255, 255, 255, 0.08); }
-.btn-dark { background: rgba(0, 0, 0, 0.3); border-color: var(--rule-hard); color: var(--ink); }
+.btn:hover { border-color: var(--live); color: var(--live); }
+.btn-accent { background: var(--live); border-color: var(--live); color: #1a1206; font-weight: 500; }
+.btn-accent:hover { background: transparent; color: var(--live); }
+.btn-ghost, .btn-dark { background: var(--surface); }
 
-/* --------------------------------------------------------------- beats --- */
-/* Narrative beats are tall because they hold a feature grid, a 13-card map or a
-   14-step pipeline, not because 100vh is the default. 92vh leaves a sliver of
-   the next beat showing at the fold, which is what tells the reader the page
-   continues — the job the bouncing "scroll" arrow used to do badly. */
-.beat {
-  min-height: 92vh; display: flex; align-items: center;
-  padding: 120px 24px 80px;
-}
+/* ================================================================ beats ==== */
+.beat { min-height: 92vh; display: flex; align-items: center; padding: 116px 28px 80px; }
+#top.beat { min-height: 76vh; padding: 84px 28px 40px; }
 
-/* The hero is deliberately shorter than a viewport (guide 2.5). The reader
-   clicked a link that already carried the name; parking them on it for a full
-   screen spends their first five seconds on information they have. At ~64vh
-   the first real section is already breaking the bottom edge. */
-#top.beat { min-height: 64vh; padding: 86px 24px 28px; }
-.beat-center { justify-content: center; text-align: center; }
-.beat-left { justify-content: flex-start; }
+.beat-left, .beat-wide { justify-content: flex-start; }
 .beat-right { justify-content: flex-end; }
-.beat-wide { justify-content: center; }
+.beat-center { justify-content: center; text-align: center; }
 
-/* Panels are layout containers only. Blocks inside carry their own opaque
-   surface; the two centred beats additionally get a scrim, because their
-   headline and lead have no card of their own and the orb passes behind them.
-   The scrim is a density of the page's own ground colour with NO blur — it is
-   the page darkening behind a readout, not a frosted pane. */
-.panel { width: 100%; padding: 0; position: relative; }
-.beat-center .panel::before {
-  content: ''; position: absolute; z-index: -1; pointer-events: none;
-  /* Vertical bleed is free. Horizontal bleed must stay inside the beat's own
-     side padding or the scrim pushes the document wider than the viewport:
-     at -10% it added exactly 16px of horizontal scroll at 390px, which no
-     element query finds because a ::before has no node to measure. The beat
-     pads 24px (18px under 920px), so 12px always clears. */
-  top: -40px; bottom: -40px; left: -12px; right: -12px;
-  background: radial-gradient(62% 58% at 50% 50%,
-    rgba(20, 16, 9, 0.94), rgba(20, 16, 9, 0.78) 48%, transparent 76%);
-}
+.panel { width: 100%; position: relative; }
+.beat-left .panel, .beat-right .panel { max-width: var(--col); }
+.beat-wide .panel, .beat-center .panel { max-width: var(--maxw); margin-inline: auto; }
+/* Beats sit inside the same max-width as the wide ones so the reading column
+   starts on the same left edge all the way down the page, rather than being
+   centred in the viewport and drifting as the window resizes. */
+.beat-left .panel, .beat-right .panel { margin-inline: 0; }
+.beat-left > .panel { margin-left: max(0px, calc((100vw - var(--maxw)) / 2)); }
+.beat-right > .panel { margin-right: max(0px, calc((100vw - var(--maxw)) / 2)); }
 
-.beat-center .panel { max-width: 760px; }
-.beat-left .panel { max-width: 540px; }
-.beat-right .panel { max-width: 560px; }
-.beat-wide .panel { max-width: var(--maxw); }
-
+/* ---- the section marker: a labelled rule, the way a log breaks a run ---- */
 .eyebrow {
-  font-family: var(--mono); font-size: 11px; letter-spacing: 0.24em; text-transform: uppercase;
-  color: var(--accent); margin-bottom: 14px; text-shadow: 0 1px 10px rgba(0, 0, 0, 0.7);
+  display: flex; align-items: center; gap: 14px;
+  font-family: var(--mono); font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase;
+  color: var(--accent); margin-bottom: 20px;
 }
+.eyebrow::after { content: ''; flex: 1; height: 1px; background: var(--rule); }
 
-/* --------------------------------------------------------------- hero ---- */
+/* ================================================================= hero ==== */
+/* A status line, not a marketing badge: square, mono, one live dot. */
 .pill {
-  display: inline-flex; align-items: center; gap: 8px; font-family: var(--mono); font-size: 12px;
-  letter-spacing: 0.06em; color: var(--ink-dim); padding: 7px 14px; border-radius: 999px;
-  border: 1px solid var(--rule-hard); background: var(--surface);
+  display: inline-flex; align-items: center; gap: 9px;
+  font-family: var(--mono); font-size: 11.5px; letter-spacing: 0.1em;
+  color: var(--ink-faint); padding: 6px 12px;
+  border: 1px solid var(--rule); border-radius: var(--radius);
+  background: var(--surface);
 }
+.pill svg { color: var(--live); }
+
 .hero-h1 {
-  font-family: var(--sans); font-weight: 800; letter-spacing: -0.02em; line-height: 1.02;
-  font-size: clamp(40px, 7vw, 86px); margin: 16px 0 0;
-  text-shadow: 0 2px 40px rgba(0, 0, 0, 0.6);
+  font-family: var(--sans); font-weight: 800; letter-spacing: -0.03em; line-height: 1.0;
+  font-size: clamp(42px, 5.6vw, 76px); margin: 18px 0 0;
 }
-/* Was a three-stop gold->amber->coral sweep across the second line, which is
- * the stock decorative gradient: the stops meant nothing and it read as
- * texture. One colour, the one that means "awake". */
 .grad { color: var(--live); }
-.lead { font-size: clamp(16px, 2vw, 19px); line-height: 1.6; color: var(--ink-dim); max-width: 640px; margin: 20px auto 0; text-shadow: 0 1px 20px rgba(0, 0, 0, 0.7); }
-.beat-left .lead, .beat-right .lead { margin-inline: 0; }
+.lead { font-size: clamp(16px, 1.4vw, 18px); line-height: 1.65; color: var(--ink-dim); max-width: 540px; margin: 22px 0 0; }
 
-.cta-row { display: flex; gap: 14px; margin-top: 22px; flex-wrap: wrap; }
+.cta-row { display: flex; gap: 10px; margin-top: 26px; flex-wrap: wrap; }
 .cta-row.center { justify-content: center; }
-.stack { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px; justify-content: center; }
-.beat-left .stack { justify-content: flex-start; }
-.tag { font-family: var(--mono); font-size: 12px; color: var(--ink-dim); padding: 6px 11px; border-radius: 8px; border: 1px solid var(--rule-hard); background: var(--surface); }
 
-/* --------------------------------------------------------- headings ---- */
-.beat-h2 { font-family: var(--sans); font-weight: 700; letter-spacing: -0.02em; line-height: 1.08; font-size: clamp(28px, 4.4vw, 50px); margin: 0; text-shadow: 0 2px 28px rgba(0, 0, 0, 0.8), 0 1px 4px rgba(0, 0, 0, 0.6); }
-.beat-sub { font-size: clamp(15px, 1.7vw, 18px); line-height: 1.6; color: var(--ink-dim); margin: 16px 0 26px; max-width: 760px; text-shadow: 0 1px 16px rgba(0, 0, 0, 0.85); }
-.beat-sub code, .lead code { color: var(--live); background: rgba(255, 207, 90, 0.08); padding: 1px 6px; border-radius: 5px; font-size: 0.9em; }
+/* Tokens, not pills. Square, mono, unfilled — they read as a printed list of
+   what the process is built from. */
+.stack { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 24px; }
+/* Each token carries its own rule rather than sharing one strip. A shared strip
+   looks tidy on one line and breaks open the moment it wraps, leaving a row
+   with no right edge — which it does at every width below ~1200px. */
+.tag {
+  font-family: var(--mono); font-size: 11px; letter-spacing: 0.04em;
+  color: var(--ink-faint); padding: 7px 11px;
+  border: 1px solid var(--rule); border-radius: var(--radius);
+}
 
-/* ---------------------------------------------------------- feat grid --- */
-.feat-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
-.feat { display: flex; gap: 13px; padding: 15px; border: 1px solid var(--rule); border-radius: 12px; background: var(--surface); }
-.feat-ico { flex: none; display: grid; place-items: center; width: 36px; height: 36px; border-radius: 10px; color: var(--live); background: rgba(255, 207, 90, 0.08); border: 1px solid var(--rule); }
-.feat-t { font-family: var(--sans); font-weight: 600; font-size: 15px; }
-.feat-d { color: var(--ink-dim); font-size: 13.5px; line-height: 1.5; margin-top: 3px; }
+/* ============================================================= headings ==== */
+.beat-h2 { font-family: var(--sans); font-weight: 700; letter-spacing: -0.025em; line-height: 1.06; font-size: clamp(30px, 3.6vw, 46px); margin: 0; }
+.beat-sub { font-size: clamp(15px, 1.3vw, 17px); line-height: 1.65; color: var(--ink-dim); margin: 18px 0 30px; max-width: 680px; }
+.beat-sub code, .lead code { color: var(--live); font-size: 0.9em; }
 
-/* ---------------------------------------------------------- anatomy ----- */
-.anatomy { margin-top: 6px; }
-.cmd-chips { display: flex; flex-wrap: wrap; gap: 9px; margin-bottom: 20px; }
-.cmd-chip { display: inline-flex; align-items: center; gap: 7px; font-family: var(--body); font-size: 13px; color: var(--ink-dim); padding: 8px 13px; border-radius: 999px; border: 1px solid var(--rule-hard); background: var(--surface); cursor: pointer; transition: color 0.15s ease, border-color 0.15s ease; }
-.cmd-chip:hover { color: var(--ink); border-color: var(--live); }
-.cmd-chip.on { color: #1a1206; background: var(--live); border-color: transparent; font-weight: 600; }
+/* ================================================================ frames ===
+   One frame treatment, reused everywhere. Square, hairline, flat, with its
+   head one step lighter than its body. Nothing here casts a shadow. */
+.code, .shot, .stage-json {
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+}
+
+/* ---- feature grid: each item is a log entry with a key and a value ---- */
+.ruled { border-top: 1px solid var(--rule); border-left: 1px solid var(--rule); }
+.ruled > * { border-right: 1px solid var(--rule); border-bottom: 1px solid var(--rule); }
+
+.feat-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0; }
+.feat { display: flex; gap: 14px; padding: 18px; border: none; }
+.feat-ico {
+  flex: none; display: grid; place-items: center; width: 28px; height: 28px;
+  color: var(--live); border: 1px solid var(--rule); border-radius: var(--radius);
+}
+.feat-t { font-family: var(--sans); font-weight: 600; font-size: 14.5px; }
+.feat-d { color: var(--ink-dim); font-size: 13px; line-height: 1.55; margin-top: 4px; }
+
+/* ============================================================== anatomy ==== */
+/* The pipeline is a log, and a log is read in a column — at the full 1180px
+   the JSON frames stretch into the orb's limb and the Replay control ends up
+   under it. 860px also keeps the longest result line to about 90 characters. */
+.anatomy { margin-top: 4px; max-width: 860px; }
+.cmd-chips { display: flex; flex-wrap: wrap; gap: 0; margin-bottom: 26px; }
+.cmd-chip {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-family: var(--mono); font-size: 12px; color: var(--ink-faint);
+  padding: 10px 14px; border: none;
+  border-radius: var(--radius); background: none; cursor: pointer;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+.cmd-chip:hover { color: var(--live); }
+.cmd-chip.on { color: #1a1206; background: var(--live); }
 .cmd-chip.replay { margin-left: auto; }
 
-.pipeline { display: flex; flex-direction: column; gap: 0; }
-.stage { display: grid; grid-template-columns: 44px 1fr; gap: 14px; opacity: 0; transform: translateY(8px); transition: opacity 0.4s ease, transform 0.4s ease; }
-.stage.in { opacity: 1; transform: none; }
+/* The pipeline is the page's thesis made literal: the daemon's log, with a
+   spine running down it. Every other frame on the page is a quieter version
+   of this. */
+.pipeline { display: flex; flex-direction: column; }
+.stage { display: grid; grid-template-columns: 30px 1fr; gap: 16px; opacity: 0; transition: opacity 0.35s ease; }
+.stage.in { opacity: 1; }
 .stage-rail { display: flex; flex-direction: column; align-items: center; }
-.stage-ico { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 10px; color: var(--live); background: rgba(255, 207, 90, 0.08); border: 1px solid var(--rule-hard); }
-.stage-rail::after { content: ''; flex: 1; width: 2px; background: var(--rule); margin: 6px 0; min-height: 10px; }
+.stage-ico {
+  display: grid; place-items: center; width: 26px; height: 26px; flex: none;
+  color: var(--live); border: 1px solid var(--rule-hard); background: var(--void);
+}
+.stage-rail::after { content: ''; flex: 1; width: 1px; background: var(--rule); min-height: 10px; }
 .stage:last-child .stage-rail::after { display: none; }
-.stage-body { padding-bottom: 18px; min-width: 0; }
-.stage-label { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-faint); margin-bottom: 5px; }
+.stage-body { padding-bottom: 22px; min-width: 0; }
+.stage-label { font-family: var(--mono); font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--ink-faint); margin-bottom: 7px; }
 .stage-heard { font-size: 16px; color: var(--ink); }
+.stage-route { font-family: var(--mono); font-size: 13px; }
 .stage-route code { color: var(--live); }
-.stage-json { margin: 0; font-size: 12.5px; line-height: 1.5; color: #e8dcc6; background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; padding: 12px 14px; overflow-x: auto; white-space: pre; }
-.verdict { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; padding: 6px 12px; border-radius: 8px; }
-.verdict.read_only { color: #9fe6b0; background: rgba(90, 220, 130, 0.08); border: 1px solid rgba(90, 220, 130, 0.22); }
-.verdict.write { color: var(--live); background: rgba(255, 207, 90, 0.08); border: 1px solid var(--rule-hard); }
-.stage-result { display: flex; align-items: flex-start; gap: 8px; font-size: 14px; color: var(--ink-dim); overflow-wrap: anywhere; word-break: break-word; }
-.stage-result svg { color: #9fe6b0; flex: none; margin-top: 3px; }
-.stage-reply { font-size: 15px; color: var(--ink); display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
-.wave { display: inline-flex; align-items: center; gap: 3px; height: 16px; }
-.wave i { width: 3px; height: 100%; background: var(--live); border-radius: 2px; animation: wv 1s ease-in-out infinite; }
-.wave i:nth-child(2) { animation-delay: 0.15s; } .wave i:nth-child(3) { animation-delay: 0.3s; } .wave i:nth-child(4) { animation-delay: 0.45s; } .wave i:nth-child(5) { animation-delay: 0.6s; }
-@keyframes wv { 0%, 100% { transform: scaleY(0.4); } 50% { transform: scaleY(1); } }
+.stage-json { margin: 0; font-size: 12.5px; line-height: 1.55; color: #e8dcc6; padding: 13px 15px; overflow-x: auto; white-space: pre; }
 
-/* ----------------------------------------------------------- map grid --- */
-.map-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
-.map-card { border: 1px solid var(--rule); border-radius: 13px; background: var(--surface); padding: 16px; transition: border-color 0.2s ease; }
-.map-card:hover { border-color: var(--rule-hard); }
+/* Scoped to .stage-body on purpose. A pipeline step's wrapper is built as
+   `stage ${kind}`, so the verdict STEP carries class "stage verdict" and
+   matches a bare `.verdict` selector — which drew a full-width box around the
+   whole step. Only the chip inside the body should be styled. */
+.stage-body .verdict {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-family: var(--mono); font-size: 12px; padding: 6px 11px;
+  border-radius: var(--radius); border: 1px solid;
+}
+.stage-body .verdict.read_only { color: var(--verdict-pass); border-color: rgba(159, 230, 176, 0.35); }
+.stage-body .verdict.write { color: var(--verdict-write); border-color: var(--rule-hard); }
+.stage-result { display: flex; align-items: flex-start; gap: 9px; font-size: 13.5px; color: var(--ink-dim); overflow-wrap: anywhere; }
+.stage-result svg { color: var(--verdict-pass); flex: none; margin-top: 3px; }
+.stage-reply { font-size: 15px; color: var(--ink); display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.wave { display: inline-flex; align-items: flex-end; gap: 2px; height: 14px; }
+.wave i { width: 2px; height: 100%; background: var(--live); animation: wv 1s ease-in-out infinite; }
+.wave i:nth-child(2) { animation-delay: 0.15s; } .wave i:nth-child(3) { animation-delay: 0.3s; }
+.wave i:nth-child(4) { animation-delay: 0.45s; } .wave i:nth-child(5) { animation-delay: 0.6s; }
+@keyframes wv { 0%, 100% { transform: scaleY(0.35); } 50% { transform: scaleY(1); } }
+
+/* =============================================================== map grid ==
+   A register of surfaces. One continuous ruled table, not 13 floating cards. */
+.map-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; }
+.map-card { border: none; padding: 16px; transition: background 0.15s ease; }
+.map-card:hover { background: var(--surface-2); }
 .map-head { display: flex; align-items: center; gap: 10px; }
-.map-ico { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 9px; color: var(--live); background: rgba(255, 207, 90, 0.08); border: 1px solid var(--rule); }
-.map-name { font-family: var(--sans); font-weight: 600; font-size: 15px; }
-.map-count { margin-left: auto; font-family: var(--mono); font-size: 12px; color: var(--ink-faint); border: 1px solid var(--rule); border-radius: 7px; padding: 2px 8px; }
-.map-tools { display: flex; flex-wrap: wrap; gap: 5px; margin: 12px 0; }
-.map-tools code { font-size: 11px; color: var(--ink-dim); background: rgba(255, 255, 255, 0.03); border: 1px solid var(--rule); border-radius: 6px; padding: 2px 7px; }
-.map-ex { font-size: 13px; color: var(--accent); }
+.map-ico { display: grid; place-items: center; width: 24px; height: 24px; color: var(--live); border: 1px solid var(--rule); }
+.map-name { font-family: var(--sans); font-weight: 600; font-size: 14px; }
+.map-count { margin-left: auto; font-family: var(--mono); font-size: 11px; color: var(--ink-faint); }
+.map-tools { display: flex; flex-wrap: wrap; gap: 4px 10px; margin: 12px 0 10px; }
+.map-tools code { font-size: 10.5px; color: var(--ink-faint); }
+.map-ex { font-size: 12.5px; color: var(--accent); font-style: italic; }
 
-/* -------------------------------------------------------------- stats --- */
-.stat-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 22px 0 28px; }
-.stat { text-align: center; border: 1px solid var(--rule); border-radius: 12px; background: var(--surface); padding: 18px 10px; }
-.stat-n { font-family: var(--sans); font-weight: 800; font-size: clamp(26px, 4vw, 38px); color: var(--live); }
-.stat-l { font-family: var(--mono); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-faint); margin-top: 4px; }
+/* 13 surfaces over 3 columns leaves two dead cells in the last row. A register
+   ends on its total, so the total fills them — the span is set per breakpoint
+   to match however many cells are actually left over (13 % 3 = 1 -> 2 spare,
+   13 % 2 = 1 -> 1 spare, 1 column -> none). */
+.map-total {
+  grid-column: span 2; display: flex; align-items: baseline; gap: 12px; padding: 16px;
+}
+.map-total-n { font-family: var(--mono); font-size: 28px; color: var(--live); line-height: 1; }
+.map-total-l { font-family: var(--mono); font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-faint); }
 
-/* ------------------------------------------------------------ two col --- */
-.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-.col-card { border: 1px solid var(--rule); border-radius: 13px; background: var(--surface); padding: 20px; }
-.col-head { display: inline-flex; align-items: center; gap: 9px; font-family: var(--sans); font-weight: 700; font-size: 17px; margin-bottom: 14px; }
-.col-card.solid .col-head { color: #9fe6b0; }
+/* ================================================================= stats ===
+   One readout strip divided by rules, not four separate boxes. */
+.stat-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; margin: 0 0 30px; }
+.stat { border: none; padding: 20px 16px; text-align: left; }
+.stat-n { font-family: var(--mono); font-weight: 500; font-size: clamp(24px, 3vw, 34px); color: var(--live); line-height: 1; }
+.stat-l { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-faint); margin-top: 8px; }
+
+/* =============================================================== two col === */
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
+.col-card { border: none; padding: 22px; }
+.col-head {
+  display: inline-flex; align-items: center; gap: 9px;
+  font-family: var(--mono); font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase;
+  margin-bottom: 16px;
+}
+.col-card.solid .col-head { color: var(--verdict-pass); }
 .col-card.growing .col-head { color: var(--accent); }
-.col-row { padding: 11px 0; border-top: 1px solid var(--rule); }
-.col-row:first-of-type { border-top: none; }
-.col-t { font-family: var(--sans); font-weight: 600; font-size: 14.5px; }
-.col-d { color: var(--ink-dim); font-size: 13.5px; line-height: 1.5; margin-top: 3px; }
+.col-row { padding: 13px 0; border-top: 1px solid var(--rule); }
+.col-row:first-of-type { border-top: none; padding-top: 0; }
+.col-t { font-family: var(--sans); font-weight: 600; font-size: 14px; }
+.col-d { color: var(--ink-dim); font-size: 13px; line-height: 1.55; margin-top: 4px; }
 
-/* --------------------------------------------------------------- code --- */
-.code { margin-top: 24px; border: 1px solid var(--rule-hard); border-radius: 12px; overflow: hidden; background: var(--surface); text-align: left; }
-.code-bar, .shot-bar { display: flex; align-items: center; gap: 7px; font-family: var(--mono); font-size: 12px; color: var(--ink-faint); padding: 10px 14px; border-bottom: 1px solid var(--rule); }
-.code-bar span, .shot-bar span { width: 10px; height: 10px; border-radius: 50%; background: var(--rule-hard); }
-.code pre { margin: 0; padding: 16px 18px; font-size: 13px; line-height: 1.7; color: #e8dcc6; overflow-x: auto; }
+/* ================================================================== code === */
+.code { margin-top: 28px; overflow: hidden; text-align: left; }
+.code-bar, .shot-bar {
+  display: flex; align-items: center; gap: 9px;
+  font-family: var(--mono); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--ink-faint); padding: 9px 15px;
+  background: var(--surface-2); border-bottom: 1px solid var(--rule);
+}
+.code pre { margin: 0; padding: 18px; font-size: 13px; line-height: 1.75; color: #e8dcc6; overflow-x: auto; }
 
-/* ------------------------------------------------------------- shots ---- */
-.shot { margin: 28px auto 0; max-width: 940px; border: 1px solid var(--rule-hard); border-radius: 12px; overflow: hidden; background: var(--surface); }
-.shot.narrow { max-width: 760px; }
+/* ================================================================= shots === */
+/* Same reading column as the pipeline, for the same reason. */
+.shot { margin: 30px 0 0; max-width: 860px; overflow: hidden; }
 .shot img { display: block; width: 100%; }
-.shot-scroll { max-height: 440px; overflow-y: auto; }
-.shot-cap { font-size: 12.5px; color: var(--ink-faint); padding: 10px 14px; border-top: 1px solid var(--rule); margin: 0; }
+.shot-scroll { max-height: 420px; overflow-y: auto; }
+.shot-cap { font-family: var(--mono); font-size: 11.5px; color: var(--ink-faint); padding: 10px 15px; border-top: 1px solid var(--rule); margin: 0; }
 
-/* ------------------------------------------------------------ footer ---- */
+/* ================================================================ footer === */
 .footer { border-top: 1px solid var(--rule); margin-top: 20px; background: var(--void); }
-.footer-inner { display: flex; align-items: center; justify-content: space-between; height: 70px; font-size: 13px; }
+.footer-inner { display: flex; align-items: center; justify-content: space-between; height: 64px; font-family: var(--mono); font-size: 11.5px; color: var(--ink-faint); }
 
-/* --------------------------------------------------------- responsive --- */
+/* ============================================================ responsive === */
+@media (max-width: 1040px) {
+  .map-grid { grid-template-columns: repeat(2, 1fr); }
+  .map-total { grid-column: span 1; }
+}
 @media (max-width: 920px) {
-  .beat { padding: 100px 18px 60px; min-height: auto; }
-  .beat-left, .beat-right, .beat-wide, .beat-center { justify-content: center; text-align: left; }
-  .beat-center { text-align: center; }
-  .panel { padding: 24px 20px 28px; }
-  .beat-left .panel, .beat-right .panel, .beat-center .panel { max-width: 640px; }
+  .beat { padding: 96px 20px 56px; min-height: auto; }
+  .beat-left, .beat-right, .beat-wide, .beat-center { justify-content: flex-start; text-align: left; }
+  .beat-left .panel, .beat-right .panel, .beat-wide .panel, .beat-center .panel { max-width: 100%; margin: 0; }
+  #top.beat { min-height: auto; padding-top: 86px; }
   .nav-links { display: none; }
   .feat-grid { grid-template-columns: 1fr; }
-  .map-grid { grid-template-columns: 1fr 1fr; }
   .two-col { grid-template-columns: 1fr; }
   .stat-row { grid-template-columns: repeat(2, 1fr); }
   /* Release the audit screenshot's inner scroll box on touch: a drag starting
-     inside a 440px overflow-y:auto panel scrolls the panel, not the page, so
-     the reader gets stuck mid-section. Let it run full height instead. */
+     inside a 420px overflow-y:auto panel scrolls the panel, not the page. */
   .shot-scroll { max-height: none; overflow-y: visible; }
-  .beat-left .lead, .beat-right .lead { margin-inline: 0; }
 }
-@media (max-width: 560px) {
+@media (max-width: 620px) {
   .map-grid { grid-template-columns: 1fr; }
-  .cta-row { flex-direction: column; }
-  .cta-row .btn { width: 100%; justify-content: center; }
+  .map-total { grid-column: span 1; }
+  .cmd-chips { flex-direction: column; }
+  .cmd-chip { justify-content: flex-start; }
+  .cmd-chip.replay { margin-left: 0; }
+  .cta-row { flex-direction: column; align-items: stretch; }
+  .cta-row .btn { justify-content: center; }
+  .stack { width: 100%; }
 }
 
-/* ------------------------------------------------- reduced motion ------- */
+/* ========================================================= reduced motion == */
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
-  .stage { opacity: 1; transform: none; }
-  .scroll-hint .down, .wave i { animation: none; }
+  .stage { opacity: 1; }
+  .wave i { animation: none; }
 }

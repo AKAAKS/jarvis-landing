@@ -62,9 +62,21 @@ you add a surface, only the array changes.
   `<Bloom>` pass fails under it and blanks the whole canvas, which looks like
   WebGL being off and sends you debugging the wrong thing.
 - **The orb stands beside content, never behind it.** `OFFSETS` in
-  `src/orb/Orb.jsx` is derived from the camera's visible half-height
-  (`tan(22.5°) × 6 = 2.49` world units), not eyeballed. Mobile uses a single
-  fixed offset because full-width panels leave no free half to stand in.
+  `src/orb/Orb.jsx` are **fractions of the visible half-width**, not world
+  units. The camera's visible height is fixed but its visible width scales with
+  the viewport's aspect, so a world offset tuned on a 16:9 monitor slides off
+  frame entirely at 4:3. The value is multiplied by `state.viewport.width / 2`
+  each frame.
+- **Mobile fades the orb on scroll distance, not on beat index.** The phone hero
+  is taller than the viewport, so the reader scrolls through the orb's band
+  while still on beat 0; a per-beat gate leaves the limb over the lead
+  paragraph for the whole first screenful.
+- **Ruled tables draw top+left on the container and right+bottom on each cell.**
+  Any other split needs `nth-child` corrections that break the moment a cell
+  spans two columns — which the register's total row does.
+- **A pipeline step's wrapper is `stage ${kind}`,** so the verdict step carries
+  class `"stage verdict"` and will match a bare `.verdict` selector. Chip rules
+  must be scoped to `.stage-body`.
 - **Check 390px as well as desktop.** A `::before` scrim once added 16px of
   horizontal scroll that no element query could find, because a pseudo-element
   has no node to measure.

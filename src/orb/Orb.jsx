@@ -10,49 +10,56 @@ import { usePrefersReducedMotion, useIsMobile } from './hooks'
 
 const clamp01 = (v) => Math.min(1, Math.max(0, v))
 
-// Per-beat orb placement. The orb is an instrument standing BESIDE the content,
-// never a surface the content sits on, so every value here is derived from how
-// much room the beat's panel leaves rather than chosen by eye.
+// Per-beat orb placement and size.
 //
-// Geometry: camera is fov 45 at z=6, so the visible half-width at the orb's
-// plane is tan(22.5°) * 6 = 2.49 world units per unit of aspect. At a 16:9
-// desktop viewport that is ~4.4 world units from centre to either edge. The
-// globe's radius is 2 and its bright core sits within ~1.1.
+// The orb is the running process the log describes, so it stands BESIDE the
+// reading column, at a size that lets it be seen whole. An earlier pass pushed
+// it up and out of frame to stop it wrecking legibility, which fixed the text
+// by deleting the subject. Scaling it down and placing it properly keeps both.
 //
-//   x = ±2.4  -> core centred in the free half of a half-width beat (1/4 beats)
-//   x = ±6.5  -> core is fully off-frame and only the outer globe's limb
-//                crosses the edge; this is what wide beats need, because a wide
-//                panel spans the full column and has no free half.
+// X IS A FRACTION OF THE VISIBLE HALF-WIDTH, NOT A WORLD UNIT. The camera is
+// fov 45 at z=6, so the visible height is fixed at 2 * tan(22.5deg) * 6 = 4.98
+// world units but the visible WIDTH scales with the viewport's aspect ratio —
+// about 11 units wide at 16:9 and only 8 at 4:3. A fixed world offset that sits
+// neatly beside the column on a wide monitor therefore slides off the right
+// edge entirely on a narrow one. r3f hands us the measured viewport each frame,
+// so the placement is taken from that instead of from an assumed aspect.
 //
-// The old values used +4.4/+4.6 for the wide beats, which put the core exactly
-// on the right-hand content: the $20 stat tile, the "Still growing" column and
-// the setup code block were all sitting on the brightest part of the orb.
+//   0.52 -> centre at 76% across: the orb sits whole in the free half, clear
+//           of the 600px column, on any aspect
+//   1.05 -> centre just past the right edge, so only the limb crosses it; this
+//           is what the wide beats need, their column spanning the page
 const OFFSETS = [
-  [0, 2.8],    // 0 hero   — core lifted so it crowns the frame: the camera's
-               //            visible half-height is tan(22.5 deg)*6 = 2.49 world
-               //            units, and the core's radius is ~1.1, so at +2.8
-               //            the core spans 1.7..3.9 and only its lower edge
-               //            (1.7..2.49, the top ~16% of the frame) is on
-               //            screen. The h1 sits below that against the sparse
-               //            outer limb. At +3.6 the whole orb cleared the top
-               //            edge and a short viewport — the 630px og frame —
-               //            showed nothing but the opaque nav.
-  [2.4, 0],    // 1 listen — panel left, orb in the free right half
-  [6.5, 0],    // 2 act    — wide: limb only
-  [6.5, 0],    // 3 reach  — wide: limb only
-  [-2.4, 0],   // 4 guard  — panel right, orb in the free left half
-  [6.5, 0],    // 5 state  — wide: limb only
-  [0, -4.0],   // 6 open   — dropped below the setup block and cropped by the
-               //            bottom of the frame. This beat is the call to
-               //            action and its commands must be copyable at a
-               //            glance; it was previously the worst collision on
-               //            the page.
+  [0.52, 0.15],  // 0 hero   — column left, orb whole on the right
+  [0.52, 0],     // 1 listen — same placement, so the orb reads as one object
+                 //            carried down the page rather than re-staged
+  [1.05, 0],     // 2 act    — wide: limb only
+  [1.08, 0],     // 3 reach  — wide: limb only
+  [-0.52, 0],    // 4 guard  — column right, orb whole on the left
+  [1.05, 0],     // 5 state  — wide: limb only
+  [0.52, 0],     // 6 open   — back to the hero's placement, closing the loop
 ]
 
-// Mobile: panels are full-width, so there is no free half to stand in and any
-// horizontal offset just slides the core under the text. Park the orb above the
-// content instead and let it sit mostly off the top of the frame.
-const MOBILE_OFFSET = [0, 4.2]
+const SCALES = [0.60, 0.60, 0.80, 0.80, 0.60, 0.80, 0.60]
+
+// Mobile: the column is full-width, so there is no free half to stand in and
+// any horizontal offset slides the orb under the text. Park it above the
+// content and let it crop against the top of the frame.
+const MOBILE_OFFSET = [0, 3.0]
+const MOBILE_SCALE = 0.78
+
+// On a phone the orb cannot stand beside anything — the column is the whole
+// screen — so it steps back as you start reading instead of competing. It stays
+// a present object rather than being deleted, which is what pushing it off
+// frame amounted to. Desktop never dims: there the orb has its own half.
+//
+// Keyed to scroll DISTANCE, not to the beat index. The mobile hero is taller
+// than the viewport, so the reader scrolls through the orb's band while still
+// on beat 0 — a per-beat gate leaves the limb sitting over the lead paragraph
+// for the whole first screenful.
+const MOBILE_DIM = 0.28
+const MOBILE_FADE_OVER = 0.6 // fraction of a viewport height to fade across
+
 
 function attr(geo, data, name, size) {
   geo.setAttribute(name, new THREE.BufferAttribute(data, size))
@@ -63,6 +70,8 @@ function Globe({ progressRef, beatRef, reduce, isMobile }) {
   const spinY = useRef(0)
   const seg = useRef(-1) // current morph segment, so we only re-upload on change
   const target = useRef(new THREE.Vector3())
+  const scaleNow = useRef(0.62)
+  const opacityNow = useRef(1)
 
   const built = useMemo(() => {
     const data = buildGlobe({
@@ -193,9 +202,32 @@ function Globe({ progressRef, beatRef, reduce, isMobile }) {
     // centre on mobile — i.e. directly behind every heading and paragraph on
     // the narrowest screens, the worst case rather than the safe one.
     const bi = beatRef ? Math.max(0, Math.min(OFFSETS.length - 1, beatRef.current)) : 0
+    // state.viewport is the visible extent at z=0 in world units, measured from
+    // the real canvas rather than assumed from an aspect ratio.
+    const halfW = state.viewport.width / 2
     const off = isMobile ? MOBILE_OFFSET : OFFSETS[bi]
-    target.current.set(off[0], off[1], 0)
+    target.current.set(isMobile ? off[0] : off[0] * halfW, off[1], 0)
     g.position.lerp(target.current, Math.min(1, delta * 3))
+
+    // Scale eases toward the beat's size at the same rate the position does, so
+    // the orb reads as one object moving and receding rather than two effects.
+    const wantScale = isMobile ? MOBILE_SCALE : SCALES[bi]
+    scaleNow.current += (wantScale - scaleNow.current) * Math.min(1, delta * 3)
+    g.scale.setScalar(scaleNow.current)
+
+    // Written straight to the canvas element rather than through React state:
+    // this runs every frame and a setState here would re-render the whole
+    // scene graph 60 times a second. Guarded so the DOM write only happens
+    // when the value actually changes.
+    let wantOpacity = 1
+    if (isMobile) {
+      const t = clamp01(window.scrollY / (window.innerHeight * MOBILE_FADE_OVER))
+      wantOpacity = 1 - (1 - MOBILE_DIM) * t
+    }
+    if (Math.abs(wantOpacity - opacityNow.current) > 0.01) {
+      opacityNow.current = wantOpacity
+      state.gl.domElement.style.opacity = wantOpacity.toFixed(3)
+    }
 
     // --- outer globe reacts more between sections ---
     // clusters surge mid-transition then re-settle ("sections moving here and there")
