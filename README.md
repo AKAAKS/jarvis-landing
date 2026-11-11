@@ -67,6 +67,23 @@ you add a surface, only the array changes.
   the viewport's aspect, so a world offset tuned on a 16:9 monitor slides off
   frame entirely at 4:3. The value is multiplied by `state.viewport.width / 2`
   each frame.
+- **Screenshots need `height: auto`.** Every `<img>` carries explicit width and
+  height attributes for intrinsic sizing. Without `height: auto` the height
+  ATTRIBUTE becomes the used height while `width: 100%` sets the width, and
+  each one is silently drawn off its true aspect ratio.
+- **Crop screenshots to their content before adding them.** `audit.png` was
+  1905px wide with only ~690px of it carrying anything; squeezed into a 600px
+  column that put the log text at 31% and made it unreadable.
+- **`beatRef` holds a FLOAT**, not an index: beat number plus progress toward
+  the next, so the orb interpolates between placements instead of snapping. The
+  orb rests at its offset for the first 62% of a beat and travels during the
+  last 38%; interpolating across the whole beat means it never actually reaches
+  any designed placement. The core morph is driven by scroll progress and is
+  independent of this.
+- **The orb path has exactly one reversal, at the gate.** Each extra reversal
+  drags it across the full width behind whatever you are reading. This is why
+  `open` is right-aligned: bookending with the orb back on the right would cost
+  a full-width sweep behind the closing content.
 - **Mobile fades the orb on scroll distance, not on beat index.** The phone hero
   is taller than the viewport, so the reader scrolls through the orb's band
   while still on beat 0; a per-beat gate leaves the limb over the lead

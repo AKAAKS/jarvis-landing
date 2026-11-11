@@ -295,6 +295,30 @@ function Beat({ id, align = 'center', bare = false, eyebrow, children }) {
 
 const BEAT_IDS = ['top', 'listen', 'act', 'reach', 'guard', 'state', 'open']
 
+/* Returns a FLOAT beat position — index plus progress toward the next one —
+ * so the orb glides instead of snapping.
+ *
+ * Two things were making it move erratically:
+ *
+ *  1. This used to pick the beat whose CENTRE was nearest the viewport centre.
+ *     The beats are wildly different heights (the hero is 76vh, `reach` is a
+ *     13-row register), so while you were reading the middle of a tall beat its
+ *     centre could be further from the midline than a short neighbour's — and
+ *     the orb would go and stand beside a section you were not looking at.
+ *     Now it is simply the beat the midline is inside, which is monotonic with
+ *     scroll and always the one you are actually reading.
+ *
+ *  2. The orb jumped between positions the instant the index changed. Now the
+ *     index carries a fraction, and the move is spread across the end of the
+ *     beat, so scrolling drives the transit directly.
+ *
+ * The plateau matters: the orb RESTS at its designed offset for the first 62%
+ * of a beat and only travels during the last 38%. Interpolating across the
+ * whole beat would mean it is permanently in transit and never actually
+ * reaches any of the placements the offsets describe.
+ */
+const MOVE_FROM = 0.62
+
 function useActiveBeat() {
   const beatRef = useRef(0)
   useEffect(() => {
@@ -302,15 +326,22 @@ function useActiveBeat() {
     const measure = () => {
       raf = 0
       const mid = window.innerHeight / 2
-      let best = 0, bd = Infinity
-      BEAT_IDS.forEach((id, i) => {
-        const el = document.getElementById(id)
-        if (!el) return
+      let i = 0
+      let frac = 0
+      for (let k = 0; k < BEAT_IDS.length; k++) {
+        const el = document.getElementById(BEAT_IDS[k])
+        if (!el) continue
         const r = el.getBoundingClientRect()
-        const d = Math.abs(r.top + r.height / 2 - mid)
-        if (d < bd) { bd = d; best = i }
-      })
-      beatRef.current = best
+        if (r.top <= mid) {
+          i = k
+          // how far the midline has travelled through this beat, 0..1
+          const t = r.height > 0 ? (mid - r.top) / r.height : 0
+          frac = t <= MOVE_FROM ? 0 : Math.min(1, (t - MOVE_FROM) / (1 - MOVE_FROM))
+        }
+      }
+      // smoothstep so the orb eases out of one placement and into the next
+      // rather than starting and stopping abruptly at the plateau edges
+      beatRef.current = i + frac * frac * (3 - 2 * frac)
     }
     const onScroll = () => { if (!raf) raf = requestAnimationFrame(measure) }
     measure()
@@ -392,7 +423,7 @@ export default function App() {
           and watch it decompose into the shape JARVIS writes to <code>audit.jsonl</code>.
         </p>
         <Anatomy />
-        <figure className="shot">
+        <figure className="shot shot-cli">
           <div className="shot-bar">clients.cli</div>
           <img src="/cli.png" loading="lazy" decoding="async" width="745" height="285" alt="A real JARVIS CLI session: play Die For You, open Firefox, and set a reminder" />
           <figcaption className="shot-cap">A real session — not a mockup.</figcaption>
@@ -444,9 +475,9 @@ export default function App() {
             </div>
           ))}
         </div>
-        <figure className="shot">
+        <figure className="shot shot-audit">
           <div className="shot-bar">logs/audit.jsonl</div>
-          <div className="shot-scroll"><img src="/audit.png" loading="lazy" decoding="async" width="1905" height="375" alt="JARVIS audit log: each tool call recorded with a read-only or write verdict" /></div>
+          <img src="/audit.png" loading="lazy" decoding="async" width="692" height="328" alt="JARVIS audit log: each tool call recorded with a read-only or write verdict" />
           <figcaption className="shot-cap">Every tool call, recorded with its verdict.</figcaption>
         </figure>
       </Beat>
@@ -476,7 +507,7 @@ export default function App() {
       </Beat>
 
       {/* 06 — OPEN */}
-      <Beat id="open" align="left" eyebrow="06 — Run it">
+      <Beat id="open" align="right" eyebrow="06 — Run it">
         <h2 className="beat-h2">Run your own.</h2>
         <p className="lead">
           The brain (<code>jarvisd</code>) binds to localhost and talks to thin voice and CLI clients.

@@ -29,15 +29,46 @@ const clamp01 = (v) => Math.min(1, Math.max(0, v))
 //           of the 600px column, on any aspect
 //   1.05 -> centre just past the right edge, so only the limb crosses it; this
 //           is what the wide beats need, their column spanning the page
+// THE PATH: one traverse down the page, with a single reversal.
+//
+// The old path went right, right, off-right, off-right, LEFT, off-RIGHT, right
+// — three full-width reversals, two of them sweeping the orb straight across
+// the middle of the screen behind whatever you were reading. That is what read
+// as erratic. It now enters on the right, exits right, crosses once at the
+// gate, and finishes on the left.
+//
+// The one crossing is placed at `guard` on purpose: the gate is the point in
+// the story where the daemon changes its mind about a request, so it is the
+// one place the orb changing sides means something.
+//
+// This is why `open` is right-aligned rather than left. Bookending the page
+// with the orb back on the right would be tidier, but the return trip from
+// off-left to right would drag it across the full width behind the closing
+// content. The bookend is given up deliberately.
+//
+// X IS A FRACTION OF THE VISIBLE HALF-WIDTH, NOT A WORLD UNIT. The camera is
+// fov 45 at z=6, so the visible height is fixed at 2 * tan(22.5deg) * 6 = 4.98
+// world units but the visible WIDTH scales with the viewport's aspect — about
+// 11 units wide at 16:9 and only 8 at 4:3. A fixed world offset that sits
+// neatly beside the column on a wide monitor therefore slides off the right
+// edge entirely on a narrow one. r3f hands us the measured viewport each
+// frame, so the placement is taken from that instead of an assumed aspect.
+//
+//   |x| ~ 0.52 -> centre at 76% across: the orb sits whole in the free half,
+//                 clear of the 600px column, at any aspect
+//   |x| ~ 1.02 -> centre just past the edge, so only the limb crosses it;
+//                 what the wide beats need, their column spanning the page
+//
+// Y drifts gently downward across the page so the traverse reads as a descent
+// rather than a slide along a rail.
 const OFFSETS = [
-  [0.52, 0.15],  // 0 hero   — column left, orb whole on the right
-  [0.52, 0],     // 1 listen — same placement, so the orb reads as one object
-                 //            carried down the page rather than re-staged
-  [1.05, 0],     // 2 act    — wide: limb only
-  [1.08, 0],     // 3 reach  — wide: limb only
-  [-0.52, 0],    // 4 guard  — column right, orb whole on the left
-  [1.05, 0],     // 5 state  — wide: limb only
-  [0.52, 0],     // 6 open   — back to the hero's placement, closing the loop
+  [0.52, 0.18],   // 0 hero   — column left, orb whole on the right, high
+  [0.52, -0.05],  // 1 listen — same side, settling: one object carried down
+  [1.00, -0.28],  // 2 act    — wide column, so it slides out: limb only
+  [1.04, -0.10],  // 3 reach  — stays out right
+  [-0.52, 0.02],  // 4 guard  — THE reversal. Column right, orb whole on left
+  [-1.00, -0.22], // 5 state  — continues left, out past the edge
+  [-0.52, 0.08],  // 6 open   — returns from the left, no sweep back across
 ]
 
 const SCALES = [0.60, 0.60, 0.80, 0.80, 0.60, 0.80, 0.60]
@@ -201,18 +232,32 @@ function Globe({ progressRef, beatRef, reduce, isMobile }) {
     // This used to be `const k = isMobile ? 0 : 1`, which pinned the orb dead
     // centre on mobile — i.e. directly behind every heading and paragraph on
     // the narrowest screens, the worst case rather than the safe one.
-    const bi = beatRef ? Math.max(0, Math.min(OFFSETS.length - 1, beatRef.current)) : 0
+    // beatRef carries a fractional beat position, so the target is interpolated
+    // between two placements rather than jumping to one. See useActiveBeat.
+    const bp = beatRef ? Math.max(0, Math.min(OFFSETS.length - 1, beatRef.current)) : 0
+    const i0 = Math.floor(bp)
+    const i1 = Math.min(OFFSETS.length - 1, i0 + 1)
+    const bf = bp - i0 // 'f' is already the morph segment's fraction
+
     // state.viewport is the visible extent at z=0 in world units, measured from
     // the real canvas rather than assumed from an aspect ratio.
     const halfW = state.viewport.width / 2
-    const off = isMobile ? MOBILE_OFFSET : OFFSETS[bi]
-    target.current.set(isMobile ? off[0] : off[0] * halfW, off[1], 0)
-    g.position.lerp(target.current, Math.min(1, delta * 3))
+    if (isMobile) {
+      target.current.set(MOBILE_OFFSET[0], MOBILE_OFFSET[1], 0)
+    } else {
+      const ox = OFFSETS[i0][0] + (OFFSETS[i1][0] - OFFSETS[i0][0]) * bf
+      const oy = OFFSETS[i0][1] + (OFFSETS[i1][1] - OFFSETS[i0][1]) * bf
+      target.current.set(ox * halfW, oy, 0)
+    }
+    // A light smoothing pass on top of an already-continuous target: it only
+    // takes the edge off frame-to-frame scroll sampling, it is not what moves
+    // the orb between beats any more.
+    g.position.lerp(target.current, Math.min(1, delta * 6))
 
     // Scale eases toward the beat's size at the same rate the position does, so
     // the orb reads as one object moving and receding rather than two effects.
-    const wantScale = isMobile ? MOBILE_SCALE : SCALES[bi]
-    scaleNow.current += (wantScale - scaleNow.current) * Math.min(1, delta * 3)
+    const wantScale = isMobile ? MOBILE_SCALE : SCALES[i0] + (SCALES[i1] - SCALES[i0]) * bf
+    scaleNow.current += (wantScale - scaleNow.current) * Math.min(1, delta * 6)
     g.scale.setScalar(scaleNow.current)
 
     // Written straight to the canvas element rather than through React state:

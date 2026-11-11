@@ -337,8 +337,19 @@ code, pre { font-family: var(--mono); }
 /* ================================================================= shots === */
 /* Same reading column as the pipeline, for the same reason. */
 .shot { margin: 30px 0 0; max-width: 860px; overflow: hidden; }
-.shot img { display: block; width: 100%; }
-.shot-scroll { max-height: 420px; overflow-y: auto; }
+/* height:auto is load-bearing. Every <img> here carries explicit width and
+   height attributes (for intrinsic sizing, so the layout does not jump while
+   they load). Without height:auto that height ATTRIBUTE becomes the used
+   height while width:100% sets the width, so each screenshot is squeezed or
+   stretched off its true aspect ratio — cli.png is 2.61:1 and was being drawn
+   at 3.02:1. */
+.shot img { display: block; width: 100%; height: auto; }
+
+/* Never upscale a screenshot past its own pixels: it only adds blur. The cap
+   is each image's natural width, so the frame shrinks to fit the evidence
+   rather than the evidence being stretched to fit the frame. */
+.shot-cli { max-width: 745px; }    /* cli.png is 745px wide */
+.shot-audit { max-width: 692px; }  /* audit.png is 692px wide */
 .shot-cap { font-family: var(--mono); font-size: 11.5px; color: var(--ink-faint); padding: 10px 15px; border-top: 1px solid var(--rule); margin: 0; }
 
 /* ================================================================ footer === */
@@ -359,9 +370,6 @@ code, pre { font-family: var(--mono); }
   .feat-grid { grid-template-columns: 1fr; }
   .two-col { grid-template-columns: 1fr; }
   .stat-row { grid-template-columns: repeat(2, 1fr); }
-  /* Release the audit screenshot's inner scroll box on touch: a drag starting
-     inside a 420px overflow-y:auto panel scrolls the panel, not the page. */
-  .shot-scroll { max-height: none; overflow-y: visible; }
 }
 @media (max-width: 620px) {
   .map-grid { grid-template-columns: 1fr; }
