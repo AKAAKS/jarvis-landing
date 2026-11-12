@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#0b0b0c" />
+    <meta name="robots" content="noindex" />
+
+    <title>JARVIS · Privacy</title>
+    <meta
+      name="description"
+      content="How the personal assistant software behind this project handles Google account data. One user, one machine, no third parties."
+    />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;1,400&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Standalone by design: the app's stylesheet is hashed at build time, so
+         this page carries the same tokens rather than linking a moving target.
+         Same rules as the landing page — square, hairlines, no fills, colour
+         reserved for meaning. -->
+    <style>
+      :root {
+        --ground:  #0b0b0c;
+        --text:    #8f8f93;
+        --ink-mid: #c2c2c7;
+        --speech:  #f2f0ed;
+        --faint:   #5e5e63;
+        --blocked: #e05a44;
+        --rule:    #1e1e21;
+        --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+        --body: Inter, system-ui, -apple-system, 'Segoe UI', sans-serif;
+        --gut: clamp(16px, 4vw, 44px);
+      }
+
+      *, *::before, *::after { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        background: var(--ground);
+        color: var(--text);
+        font-family: var(--body);
+        font-size: 16px;
+        line-height: 1.65;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      .wrap {
+        max-width: 720px;
+        margin: 0 auto;
+        padding: clamp(48px, 10vw, 112px) var(--gut) 96px;
+      }
+
+      nav {
+        font-family: var(--mono);
+        font-size: 12px;
+        letter-spacing: 0.04em;
+        color: var(--faint);
+        margin-bottom: 56px;
+      }
+      nav a { color: var(--faint); text-decoration: none; border-bottom: 1px solid var(--rule); }
+      nav a:hover { color: var(--text); }
+
+      h1 {
+        font-family: var(--body);
+        font-weight: 500;
+        font-size: clamp(28px, 5vw, 40px);
+        line-height: 1.15;
+        letter-spacing: -0.01em;
+        color: var(--speech);
+        margin: 0 0 12px;
+      }
+
+      .asof {
+        font-family: var(--mono);
+        font-size: 12px;
+        color: var(--faint);
+        margin: 0 0 48px;
+      }
+
+      h2 {
+        font-family: var(--body);
+        font-weight: 500;
+        font-size: 17px;
+        color: var(--ink-mid);
+        margin: 48px 0 14px;
+        padding-top: 24px;
+        border-top: 1px solid var(--rule);
+      }
+
+      p { margin: 0 0 16px; }
+
+      ul { margin: 0 0 16px; padding-left: 20px; }
+      li { margin-bottom: 10px; }
+
+      code, .scope {
+        font-family: var(--mono);
+        font-size: 13px;
+        color: var(--ink-mid);
+      }
+
+      strong { color: var(--ink-mid); font-weight: 500; }
+
+      .never { color: var(--blocked); }
+
+      a { color: var(--ink-mid); text-decoration: none; border-bottom: 1px solid var(--rule); }
+      a:hover { border-bottom-color: var(--ink-mid); }
+
+      footer {
+        margin-top: 64px;
+        padding-top: 24px;
+        border-top: 1px solid var(--rule);
+        font-family: var(--mono);
+        font-size: 12px;
+        color: var(--faint);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <nav><a href="/">&larr; JARVIS</a></nav>
+
+      <h1>Privacy</h1>
+      <p class="asof">Last updated 12 November 2026</p>
+
+      <p>
+        This policy covers the personal assistant software described on this site
+        (<strong>JARVIS</strong>) and the self-hosted <strong>Home Assistant</strong>
+        install that shares its Google OAuth client. Both are run by one person —
+        the owner of the Google Account they connect to — on hardware that person
+        owns. There are no other users, no customers and no accounts to create.
+      </p>
+
+      <h2>What Google data is accessed</h2>
+      <p>The software requests these scopes, and no others:</p>
+      <ul>
+        <li>
+          <span class="scope">gmail.readonly</span> — searching and reading the
+          owner's own mail, so the assistant can answer questions about it.
+        </li>
+        <li>
+          <span class="scope">gmail.compose</span> — creating drafts.
+          <span class="never">It cannot send mail.</span> The send scope is
+          deliberately not requested, so sending is impossible rather than merely
+          disallowed.
+        </li>
+        <li>
+          <span class="scope">calendar</span> — reading, creating and deleting the
+          owner's own calendar events.
+        </li>
+      </ul>
+
+      <h2>Where it goes</h2>
+      <ul>
+        <li>
+          The software runs as a daemon on the owner's own PC. Google data is
+          fetched directly from Google to that machine.
+        </li>
+        <li>
+          <strong>When the owner asks a question that requires it, the relevant
+          message or event content is sent to Anthropic's API</strong> as part of
+          the prompt, because the assistant is built on a language model. This is
+          the one place data leaves the machine. Anthropic's handling is governed
+          by their own terms.
+        </li>
+        <li>
+          Conversation history and assistant state are stored in a local SQLite
+          file on that PC. The OAuth token is stored in a local file on that PC.
+        </li>
+        <li>
+          Nothing is sold, shared, rented or transferred to any other party. There
+          is no analytics, no tracking, no advertising and no server operated by
+          this project that receives Google data.
+        </li>
+      </ul>
+
+      <h2>Limited Use</h2>
+      <p>
+        Use of information received from Google APIs adheres to the
+        <a href="https://developers.google.com/terms/api-services-user-data-policy" target="_blank" rel="noopener">
+          Google API Services User Data Policy</a>, including the Limited Use
+        requirements.
+      </p>
+
+      <h2>Retention and removal</h2>
+      <p>
+        Access can be withdrawn at any time from
+        <a href="https://myaccount.google.com/permissions" target="_blank" rel="noopener">
+          Google Account permissions</a>, which immediately and permanently
+        invalidates the software's credentials. Local data is removed by deleting
+        the stored token and database files from the machine. Because everything
+        lives on hardware the owner controls, there is no copy elsewhere to
+        request the deletion of.
+      </p>
+
+      <h2>Contact</h2>
+      <p>
+        Questions about this policy go to the support address shown on the Google
+        consent screen for this application.
+      </p>
+
+      <footer>
+        Source: <a href="https://github.com/AKAAKS/personal-assistant" target="_blank" rel="noopener">github.com/AKAAKS/personal-assistant</a>
+      </footer>
+    </div>
+  </body>
+</html>
