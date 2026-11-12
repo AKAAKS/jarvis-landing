@@ -1,13 +1,16 @@
 import { useRef } from 'react'
 import { usePlayback } from './usePlayback'
 
-/* A pending figure still reserves its box, so the layout is finished and
- * verifiable before the screenshots exist. Aspect ratios are deliberate: the
- * browser-window shots are 16:10, the terminal shot is wider and shorter. */
-function Shot({ shot, on, ratio }) {
+/* A pending figure still reserves a box at `ratio`, so the layout is finished
+ * and verifiable before a screenshot exists. Once a real image is in, the
+ * ratio comes off: the img's own width/height attributes give the intrinsic
+ * ratio, and forcing one on the figure as well cropped the image inside
+ * `overflow: hidden`. */
+function Shot({ shot, ratio }) {
+  const pending = !shot.src
   return (
-    <figure className={`shot${on ? ' is-on' : ''}`} style={{ aspectRatio: ratio }}>
-      {shot.src ? (
+    <figure className="shot is-on" style={pending ? { aspectRatio: ratio } : undefined}>
+      {!pending ? (
         <img src={shot.src} alt={shot.alt} width={shot.w} height={shot.h} loading="lazy" />
       ) : (
         <div className="shot-pending">
@@ -66,13 +69,6 @@ export default function Moment({ m }) {
   const trackRef = useRef(null)
   const [shown, playing] = usePlayback(trackRef, m.lines.length)
 
-  // Which figures have been reached. A figure is reached when the line that
-  // produced it has been revealed.
-  const shotOn = m.shots.map((_, si) => {
-    const at = m.lines.findIndex((l) => l.shot === si)
-    return at === -1 || at < shown
-  })
-
   return (
     <section className="moment" id={m.id}>
       <header className="moment-head">
@@ -91,13 +87,21 @@ export default function Moment({ m }) {
               <Line key={i} l={l} on={!playing || i < shown} />
             ))}
           </div>
-          <div className="shots">
-            {m.shots.map((s, i) => (
-              <Shot key={i} shot={s} on={!playing || shotOn[i]} ratio={m.id === 'pc' ? '16 / 7' : '16 / 10'} />
-            ))}
-          </div>
         </div>
       </div>
+
+      {/* The figures sit BELOW the track, in normal flow, not inside the
+        * sticky stage. In the stage they shared 100vh with the readout, which
+        * capped them at a 286px column -- a browser screenshot at 15% scale,
+        * unreadable, and the exact bug the README already warns about. Out
+        * here they have the full measure and no height ceiling. */}
+      {m.shots.length > 0 && (
+        <div className="figs" data-n={m.shots.length}>
+          {m.shots.map((s, i) => (
+            <Shot key={i} shot={s} ratio="16 / 10" />
+          ))}
+        </div>
+      )}
 
       <footer className="moment-foot">
         <p className="moment-note">{m.note}</p>

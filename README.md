@@ -133,9 +133,22 @@ the stats row cannot drift from the register below it.
   is `track height − 100vh`. At 140vh that was ~256px on a laptop, which put a
   twelve-line readout inside two wheel notches and read as a flicker. It is
   190vh now. Step the track at 0/.15/.3/… and count `.rl.is-on`.
-- **Playback is off below 721px and under `prefers-reduced-motion`.** In both
-  cases the track loses its extra height, the stage stops sticking, and every
-  line prints at once. Check both: they are the paths most readers get.
+- **Playback is gated on FIT, not just width.** `usePlayback` refuses to play
+  a readout taller than the viewport, because the stage is sticky and exactly
+  100vh: lines past the fold would be unreachable. This is per moment, so at
+  1200x520 the two short readouts still play while the 17-line mail readout
+  falls back to static. A width test alone cannot catch this -- 1366x600 is
+  plenty wide and far too short.
+- **Playback is off below `MIN_WIDTH` (880px) and under
+  `prefers-reduced-motion`.** In both cases the track loses its extra height,
+  the stage stops sticking, and every line prints at once. Check both: they
+  are the paths most readers get.
+- **Do not measure the reveal with short sleeps.** The hook updates inside
+  `requestAnimationFrame`, which a browser throttles when the tab is not
+  focused, so a scroll-and-sample loop at 120-300ms reports a stuttering
+  `1,1,1,7,7,7` and looks exactly like a broken reveal. At 1000ms the counts
+  match `ceil((p / 0.82) * n)` exactly. Verify the scroll actually landed
+  (`scrollY` vs target) before believing a reveal bug.
 - **Ruled tables draw top+left on the container and right+bottom on each cell.**
   Any other split needs `nth-child` corrections that break the moment a row
   wraps.
@@ -160,11 +173,31 @@ the stats row cannot drift from the register below it.
 
 ## Pending
 
-The three figures render as labelled placeholders until the screenshots exist.
-Each one's `src`, `w` and `h` go in its `shots` entry in `src/data/record.js`:
+Figures live in `shots` on each moment in `src/data/record.js`, and render as
+labelled placeholders until a real `src`, `w` and `h` are filled in.
 
-1. **The bus** — catabus.com as JARVIS opened it, and the Maps tab with the
-   walking route from my coordinates.
-2. **The machine** — the voice client terminal during the `close Spotify` turn.
-3. **The mail** — the reply JARVIS composed, pasted out of the clipboard into a
-   compose window. Not a Gmail Drafts screenshot: see below.
+- [x] **The bus / catabus.com** — `public/catabus.jpg`, cropped from a
+      1868x965 capture to 1300x965 (logo, full route list, map through State
+      College) and resized to 1192px, which is 2x its widest display size.
+- [ ] **The bus / Maps** — the Maps tab with the walking route from my
+      coordinates to Crunch Fitness, walk time visible.
+- [ ] **The mail** — the composed reply pasted into a blank compose window.
+      It must be the *clipboard* text, verbatim, with no greeting, sign-off or
+      Gmail "Polish" rewrite: the readout quotes the logged `set_clipboard`
+      input directly above the figure, so any difference is visible. Redact
+      the recipient.
+- **The machine (02) needs no figure and must not get one.** See the comment
+  on its `shots: []`.
+
+## Things this rework decided that are easy to undo by accident
+
+- **Figures are NOT in the sticky stage.** They were, as a second column, and
+  that column was 286px. A 1868px browser screenshot at 286px is a 15% scale
+  smear. They now sit in `.figs` below the track, in normal flow, with no
+  height ceiling. Putting them back in the stage re-breaks this, and a moment
+  with two figures cannot fit beside a readout in 100vh at a legible size.
+- **A single figure is capped at 720px** (`.figs[data-n="1"]`). At the full
+  1012px measure a screenshot outweighs the readout it illustrates.
+- **`aspectRatio` is for placeholders only.** A real `<img>` carries its own
+  intrinsic ratio via its width/height attributes; setting a ratio on the
+  `<figure>` as well cropped the image inside `overflow: hidden`.

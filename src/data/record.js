@@ -36,7 +36,7 @@
  *  result rather than carry a reconstructed reply. If a terminal capture of one
  *  of these turns ever lands, add { k: 'reply' } lines and they will render.
  *
- *  `shot` on a line means: when this line is revealed, reveal that figure.
+ *  Figures are listed per moment in `shots` and render below the readout.
  * -------------------------------------------------------------------------- */
 
 export const LINKS = {
@@ -57,7 +57,7 @@ export const RECORD = [
       { t: '14:38:20', src: 'daemon', k: 'route', x: 'Routing to claude-haiku-4-5' },
       { t: '14:38:58', src: 'audit', k: 'tool', tool: 'open_url_browser', x: '{"url": "https://www.catabus.com"}' },
       { t: '', src: 'audit', k: 'verdict', v: 'write', x: 'allowed (write)' },
-      { t: '', src: 'audit', k: 'result', x: 'Opened https://www.catabus.com in default browser.', shot: 0 },
+      { t: '', src: 'audit', k: 'result', x: 'Opened https://www.catabus.com in default browser.' },
       { t: '', src: '', k: 'gap', x: '22 minutes later, still getting out of the door' },
       { t: '17:01:09', src: 'daemon', k: 'audio', x: 'Audio in: 4.6s (146880 bytes)' },
       { t: '17:01:10', src: 'daemon', k: 'heard', x: 'Give me directions to walk from my home to crunch fitness.' },
@@ -82,9 +82,11 @@ export const RECORD = [
       'Those are my own coordinates in the second call, not a place name. It resolved where home is before it built the URL.',
     shots: [
       {
-        src: '',
-        alt: 'The CATA bus site as JARVIS opened it, showing the next departures for my stop.',
-        cap: 'catabus.com, opened on my laptop',
+        src: '/catabus.jpg',
+        w: 1192,
+        h: 885,
+        alt: 'The CATA bus route map and route list, as JARVIS opened it in my browser.',
+        cap: 'catabus.com, the site it opens',
       },
       {
         src: '',
@@ -112,15 +114,19 @@ export const RECORD = [
       { t: '12:03:13', src: 'daemon', k: 'route', x: 'Routing to claude-haiku-4-5' },
       { t: '12:03:14', src: 'audit', k: 'tool', tool: 'close_app', x: '{"name": "spotify"}' },
       { t: '', src: 'audit', k: 'verdict', v: 'write', x: 'allowed (write)' },
-      { t: '', src: 'audit', k: 'result', x: 'Closed spotify.', shot: 0 },
+      { t: '', src: 'audit', k: 'result', x: 'Closed spotify.' },
       { t: '12:03:23', src: 'daemon', k: 'heard', x: "That's all." },
       { t: '12:03:36', src: 'daemon', k: 'reject', x: 'Utterance rejected — not the enrolled speaker' },
     ],
     note:
       'That last line is the speaker check refusing its own voice coming back in through the microphone. It is the reason talking to it does not send it into a conversation with itself.',
-    shots: [
-      { src: '', alt: 'The voice client terminal showing the close Spotify turn.', cap: 'the client, mid-turn' },
-    ],
+    /* No figure, deliberately. The terminal prints "  You: ..." and
+     * "  JARVIS: ..." with plain print() calls (clients/voice_client.py:596)
+     * that the file logger never sees -- voice_client.log holds only wake
+     * word, capture length and speaker-check diagnostics. So any drawing of
+     * that terminal would have to invent the reply line, and the readout
+     * beside it is already the honest rendering of these logs. No mock-up. */
+    shots: [],
   },
   {
     id: 'mail',
@@ -168,7 +174,7 @@ export const RECORD = [
         x: '{"text": "Hi, I\'m Akshit Kartik. I\'m reaching out to introduce myself and learn more about opportunities with your team. I\'d love to discuss how I can contribute to your organization. Looking forward to connecting with you."}',
       },
       { t: '', src: 'audit', k: 'verdict', v: 'write', x: 'allowed (write)' },
-      { t: '', src: 'audit', k: 'result', x: 'Copied to your clipboard.', shot: 0 },
+      { t: '', src: 'audit', k: 'result', x: 'Copied to your clipboard.' },
     ],
     note:
       'That tool input is the only place on this page where you can read something the machine composed rather than something it heard, and it is there by accident: the reply had to pass through set_clipboard to reach me, so the log caught it on the way past. The two lines above it are the same misrecognition and retry as the turn before, with the speaker check refusing its own voice in between.',

@@ -195,13 +195,22 @@ h3.sub {
   display: grid; align-content: center;
 }
 
+/* The stage holds the readout and nothing else. Figures used to share it as a
+ * second column, which forced them to 286px and made a browser screenshot
+ * unreadable; they now live in .figs below the track. One column also means
+ * the stage can never outgrow the sticky viewport, whatever a moment's figure
+ * count is. The playback floor is MIN_WIDTH in usePlayback.js, which also
+ * refuses to play a readout taller than the viewport. */
 .stage { display: grid; gap: 30px; }
-/* 1040px is also MIN_WIDTH in usePlayback.js, and the two must stay equal:
- * below it the readout and the figure stack, the stage outgrows the sticky
- * viewport, and its bottom would be cut off with no way to reach it. So below
- * this width there is no sticky stage at all. */
-@media (min-width: 1040px) {
-  .stage { grid-template-columns: minmax(0, 1fr) 286px; align-items: center; gap: 36px; }
+
+/* --- figures, below the track in normal flow ------------------------------ */
+.figs { margin-top: 44px; display: grid; gap: 26px; }
+/* A lone figure stops short of the full measure: at 1012px wide a browser
+ * screenshot outweighs the readout it is supposed to illustrate. A pair gets
+ * the whole width, since each half is then about the same size. */
+.figs[data-n="1"] { max-width: 720px; }
+@media (min-width: 880px) {
+  .figs[data-n="2"] { grid-template-columns: 1fr 1fr; align-items: start; }
 }
 
 /* --- the readout ---------------------------------------------------------- */
@@ -254,7 +263,6 @@ h3.sub {
 .rl-gap-rule { width: 40px; height: 1px; background: var(--rule-hi); flex: none; }
 
 /* --- figures -------------------------------------------------------------- */
-.shots { display: grid; gap: 22px; align-content: center; }
 .shot {
   margin: 0;
   border: 1px solid var(--rule);
