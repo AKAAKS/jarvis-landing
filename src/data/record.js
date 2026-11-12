@@ -16,6 +16,19 @@
  *  conversions, for anyone checking the raw files:
  *    2026-10-30  EDT = UTC-4   18:38:58Z -> 14:38:58 ; 21:01:12Z -> 17:01:12
  *    2026-11-11  EST = UTC-5   17:03:14Z -> 12:03:14
+ *    2026-11-12  EST = UTC-5   05:28:56Z -> 00:28:56
+ *
+ *  REDACTION: one Heard line in the mail moment is cut short, marked
+ *  "[address redacted]", because the raw line contains an email address. A cut
+ *  is allowed and must be visible; rewriting the line is not.
+ *
+ *  WHAT GMAIL ACTUALLY DOES. gmail_draft exists in the registry and is unit
+ *  tested against a fake client, but it has NEVER appeared in audit.jsonl --
+ *  zero entries, ever -- so no draft has ever been written to the real account
+ *  and the page must not imply one has. Every real Gmail call is a
+ *  gmail_search or a gmail_read. The reply reaches the user through
+ *  set_clipboard instead, which is what the mail moment shows. Re-check with:
+ *    grep -c gmail_draft logs/audit.jsonl
  *
  *  WHY THERE IS NO SPOKEN-REPLY LINE: the daemon logs what it HEARD but never
  *  what it said. Only the client prints "  JARVIS: ...", and the client's
@@ -101,7 +114,7 @@ export const RECORD = [
       { t: '', src: 'audit', k: 'verdict', v: 'write', x: 'allowed (write)' },
       { t: '', src: 'audit', k: 'result', x: 'Closed spotify.', shot: 0 },
       { t: '12:03:23', src: 'daemon', k: 'heard', x: "That's all." },
-      { t: '12:03:36', src: 'daemon', k: 'reject', x: 'Utterance rejected: not the enrolled speaker' },
+      { t: '12:03:36', src: 'daemon', k: 'reject', x: 'Utterance rejected — not the enrolled speaker' },
     ],
     note:
       'That last line is the speaker check refusing its own voice coming back in through the microphone. It is the reason talking to it does not send it into a conversation with itself.',
@@ -113,10 +126,10 @@ export const RECORD = [
     id: 'mail',
     n: '03',
     kicker: 'The mail',
-    title: 'It reads the mail. It cannot send.',
+    title: 'It reads the mail. It writes the reply. The paste is mine.',
     blurb:
-      'The Gmail tool pack has exactly three entries: gmail_search, gmail_read and gmail_draft. No send tool exists in the registry, so there is nothing for the model to call even if it decided to. The worst case is a draft sitting in my own account.',
-    from: 'jarvisd.log + audit.jsonl, 2026-10-30',
+      'Its reach into Gmail is reading, and that is all it has ever done: every Gmail call in the audit log is a gmail_search or a gmail_read, both read_only. It never touches the compose window. When I ask for a reply it writes the reply and puts it on my clipboard, and I paste it myself. There is no send tool in the registry for the model to call even if it decided to.',
+    from: 'jarvisd.log + audit.jsonl, 2026-10-30 and 2026-11-12',
     lines: [
       { t: '17:01:34', src: 'daemon', k: 'audio', x: 'Audio in: 2.4s (75840 bytes)' },
       { t: '17:01:35', src: 'daemon', k: 'heard', x: "What's the last email I got?" },
@@ -128,21 +141,43 @@ export const RECORD = [
         src: 'audit',
         k: 'result',
         x: '[1a18e5ee784d79a4] Fri, 30 Oct 2026 19:52:26 +0000 from Ultimate Guitar: [Last chance] The Fall sale is almost over',
-        shot: 0,
       },
-      { t: '', src: '', k: 'gap', x: 'a read verdict, not a write one. Reading mail changes nothing.' },
       {
-        t: '17:05:20',
+        t: '',
+        src: '',
+        k: 'gap',
+        x: 'a read verdict, not a write one. Reading mail changes nothing. Thirteen days later I asked it to write one.',
+      },
+      { t: '00:26:54', src: 'daemon', k: 'audio', x: 'Audio in: 9.1s (291840 bytes)' },
+      {
+        t: '00:26:56',
         src: 'daemon',
         k: 'heard',
-        x: 'From now on when I ask you to read my emails only read from my primary inbox',
+        x: 'Can you draft an email to my careers page … [address redacted]',
       },
-      { t: '17:07:12', src: 'daemon', k: 'heard', x: 'Can you close the Google Maps tab that you opened?' },
+      { t: '00:26:56', src: 'daemon', k: 'route', x: 'Routing to claude-haiku-4-5' },
+      { t: '00:27:33', src: 'daemon', k: 'heard', x: 'I wanted to be me introducing myself.' },
+      { t: '00:28:21', src: 'daemon', k: 'heard', x: 'copy into that book.' },
+      { t: '00:28:35', src: 'daemon', k: 'reject', x: 'Utterance rejected — not the enrolled speaker' },
+      { t: '00:28:55', src: 'daemon', k: 'heard', x: 'Copy the draft into my clipboard.' },
+      {
+        t: '00:28:56',
+        src: 'audit',
+        k: 'tool',
+        tool: 'set_clipboard',
+        x: '{"text": "Hi, I\'m Akshit Kartik. I\'m reaching out to introduce myself and learn more about opportunities with your team. I\'d love to discuss how I can contribute to your organization. Looking forward to connecting with you."}',
+      },
+      { t: '', src: 'audit', k: 'verdict', v: 'write', x: 'allowed (write)' },
+      { t: '', src: 'audit', k: 'result', x: 'Copied to your clipboard.', shot: 0 },
     ],
     note:
-      'Those last two lines are from the same session: a standing preference it kept, and a request to undo something it had done an hour earlier. Both are ordinary. Neither needed a new feature.',
+      'That tool input is the only place on this page where you can read something the machine composed rather than something it heard, and it is there by accident: the reply had to pass through set_clipboard to reach me, so the log caught it on the way past. The two lines above it are the same misrecognition and retry as the turn before, with the speaker check refusing its own voice in between.',
     shots: [
-      { src: '', alt: 'A reply JARVIS wrote, sitting unsent in the Gmail Drafts folder.', cap: 'a drafted reply, unsent, in Drafts' },
+      {
+        src: '',
+        alt: 'The reply JARVIS composed, pasted out of the clipboard into a compose window.',
+        cap: 'the reply, pasted',
+      },
     ],
   },
 ]

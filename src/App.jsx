@@ -54,7 +54,7 @@ function Hero() {
       <p className="hero-lead">
         JARVIS is a daemon running on my own PC, so it has hands on it. It opened the transit site,
         then opened Maps with the walking route from my address. It closed the app I did not want
-        running. It found the email and left the reply in drafts, because it has no way to send one.
+        running. It read the mail and put the reply on my clipboard, because sending one is not its job.
       </p>
       <p className="hero-sub">
         Every call it makes is permission-checked and written to a log. Everything below is

@@ -104,6 +104,17 @@ the stats row cannot drift from the register below it.
   turns, so the readouts stop at the tool result rather than carry a
   reconstructed reply. If a terminal capture ever lands, add `{ k: 'reply' }`
   lines and they render. Do not write one from memory.
+- **`gmail_draft` has never run.** It is in the registry and unit-tested
+  against a fake client, so a glance at `jarvisd/tools/gmail.py` makes it look
+  live — but `grep -c gmail_draft logs/audit.jsonl` returns **0**. No draft has
+  ever been written to the real account; the Gmail OAuth compose path is
+  untested. Every real Gmail call is a `gmail_search` or a `gmail_read`. The
+  reply reaches the user through `set_clipboard`, which is a **This PC** tool,
+  not a Gmail one. Do not write copy implying a draft lands in Gmail, and do
+  not ask for a Drafts screenshot. An earlier draft of this page did both.
+- **A readout line may be cut, never rewritten.** One `heard` line in the mail
+  moment contains an email address and is cut at `… [address redacted]`. The
+  cut must stay visible. Trimming is honest; paraphrasing a log line is not.
 - **The merge is the page's, and it says so.** No screen in the real system
   shows those three files interleaved. Every moment carries a line naming the
   files it was transcribed from; if you add a moment, add that line too.
@@ -155,4 +166,5 @@ Each one's `src`, `w` and `h` go in its `shots` entry in `src/data/record.js`:
 1. **The bus** — catabus.com as JARVIS opened it, and the Maps tab with the
    walking route from my coordinates.
 2. **The machine** — the voice client terminal during the `close Spotify` turn.
-3. **The mail** — a JARVIS-written reply sitting unsent in Drafts.
+3. **The mail** — the reply JARVIS composed, pasted out of the clipboard into a
+   compose window. Not a Gmail Drafts screenshot: see below.
