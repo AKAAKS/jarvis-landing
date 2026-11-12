@@ -173,21 +173,34 @@ the stats row cannot drift from the register below it.
 
 ## Pending
 
-Figures live in `shots` on each moment in `src/data/record.js`, and render as
-labelled placeholders until a real `src`, `w` and `h` are filled in.
+All figures are in. Nothing on the page renders as a placeholder.
 
-- [x] **The bus / catabus.com** — `public/catabus.jpg`, cropped from a
-      1868x965 capture to 1300x965 (logo, full route list, map through State
-      College) and resized to 1192px, which is 2x its widest display size.
-- [ ] **The bus / Maps** — the Maps tab with the walking route from my
-      coordinates to Crunch Fitness, walk time visible.
-- [ ] **The mail** — the composed reply pasted into a blank compose window.
-      It must be the *clipboard* text, verbatim, with no greeting, sign-off or
-      Gmail "Polish" rewrite: the readout quotes the logged `set_clipboard`
-      input directly above the figure, so any difference is visible. Redact
-      the recipient.
-- **The machine (02) needs no figure and must not get one.** See the comment
-  on its `shots: []`.
+## Redactions on the page
+
+Two, both visible, both required. A readout line may be **cut, never
+rewritten**:
+
+- The 30 October Maps URL carried my real latitude and longitude where a place
+  name would go. It reads `[my coordinates]` now. Re-check with
+  `grep -rn "40\.8154" src/ dist/`.
+- No email address appears anywhere. The 12 November mail turn was moved to a
+  dictation that contains none; check with a scan of the rendered text, not
+  the source, since the readout composes lines from several fields.
+
+## Claims that were wrong, and how they got caught
+
+The 12 November session contradicted three things the page asserted. All three
+came from building a moment out of one good day's logs and assuming it
+generalised. Re-read the logs before adding a capability claim.
+
+- **It does not reliably open Maps with a route.** On 30 October it built
+  `/maps/dir/<coords>/Crunch+Fitness...`; on 12 November the same request
+  opened `maps.google.com` and nothing else. This is now in `GROWING`, not
+  the hero.
+- **The transit site is `realtime.catabus.com`.** The page quoted
+  `www.catabus.com` from an older turn while the screenshot showed the real
+  one. It took four wrong URLs to find it.
+- **`gmail_draft` has never run.** See the entry below.
 
 ## Things this rework decided that are easy to undo by accident
 

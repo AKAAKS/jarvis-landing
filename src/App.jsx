@@ -52,9 +52,10 @@ function Hero() {
         <span className="hero-turn">It cannot tell you.</span>
       </h1>
       <p className="hero-lead">
-        JARVIS is a daemon running on my own PC, so it has hands on it. It opened the transit site,
-        then opened Maps with the walking route from my address. It closed the app I did not want
-        running. It read the mail and put the reply on my clipboard, because sending one is not its job.
+        JARVIS is a daemon running on my own PC, so it has hands on it. It took four tries to find
+        the right transit site, then wrote the right one down and has gone straight there since. It
+        closed the app I did not want running. It read the mail and put the reply on my clipboard,
+        because sending one is not its job.
       </p>
       <p className="hero-sub">
         Every call it makes is permission-checked and written to a log. Everything below is
