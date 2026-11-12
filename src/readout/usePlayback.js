@@ -8,10 +8,22 @@ const clamp01 = (n) => (n < 0 ? 0 : n > 1 ? 1 : n)
  * and is never actually read. */
 const REVEAL_OVER = 0.82
 
-/* Playback is off below this width. Figures no longer share the stage, so the
- * old reason for 1040 (readout and figure stacking into an over-tall stage) is
- * gone; this is now just the width below which a mono readout wraps too hard
- * for a line-at-a-time reveal to read well. */
+/* Playback is off below this width, and the reason is CORRECTNESS, not taste.
+ *
+ * On a phone the readouts are taller than the phone. Measured at 390px wide:
+ * moment 01 is 938px tall and moment 03 is 840px, against a phone viewport of
+ * roughly 660-780. The stage is sticky and exactly 100vh, so playing there
+ * would pin the stage and reveal lines into a region below the screen edge
+ * that scrolling cannot reach -- scrolling advances the REVEAL, not the stage.
+ *
+ * The fit guard below already refuses those two on its own. This width gate
+ * exists because moment 02 is only 380px at that width and WOULD pass the fit
+ * guard, so without it a phone would play one moment and print the other two,
+ * with nothing on screen to explain the difference. Mobile is uniformly
+ * static instead.
+ *
+ * Do NOT lower this because the wrapping looks acceptable at some width. The
+ * wrapping was never the reason; the unreachable lines are. */
 const MIN_WIDTH = 880
 
 /* The real guard is height, not width. The stage is sticky and exactly 100vh,
