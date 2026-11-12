@@ -278,12 +278,13 @@ export const SOLID = [
   { t: 'Offline-first voice', d: 'Wake word, speech-to-text, text-to-speech and the local tier all work with no internet.' },
   { t: 'The gate was designed in', d: 'Audited, turn-bounded and fail-closed, not bolted on afterwards.' },
   { t: 'Cost-engineered', d: 'Cheapest capable model per request, under a hard $20 per month cap.' },
+  { t: 'Barge-in ships', d: 'Say the wake word over a spoken reply and it stops, keeps the cut-off turn in history, and takes the correction. Merged to master on 25 October after a live-mic pass.' },
 ]
 
 export const GROWING = [
   { t: 'One machine', d: 'Runs on a single Windows PC today. Multi-host is future work.' },
   { t: 'Loopback only', d: 'The WebSocket has no auth, so it stays bound to localhost rather than the network.' },
-  { t: 'Barge-in is on a branch', d: 'Interrupting it mid-sentence works, but it is awaiting a live-mic acceptance pass.' },
   { t: 'No voice satellite yet', d: 'A remote mic puck on a Pi is design intent, not shipped.' },
+  { t: 'The voice tuning is unmerged', d: 'Eight commits retuning speaker verification and the echo gate are live-tested on a branch, not on master. The record above was recorded with them on.' },
   { t: 'Directions are hit and miss', d: 'On 30 October it built a Maps URL from my coordinates and a destination. On 12 November the same request opened the Maps home page and nothing else.' },
 ]

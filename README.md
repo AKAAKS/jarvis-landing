@@ -187,6 +187,21 @@ rewritten**:
   dictation that contains none; check with a scan of the rendered text, not
   the source, since the readout composes lines from several fields.
 
+## Which branch the record was recorded on
+
+The readouts were captured while `personal-assistant` had
+`fix/voice-verification-and-echo` checked out, not `master`. Every string the
+page quotes -- `Heard:`, `Audio in:`, `Routing to`,
+`Utterance rejected -- not the enrolled speaker` -- exists on `master` too, so
+the record is faithful to the shipped code; the branch retunes thresholds, not
+log lines. Two client strings are branch-only and must NOT appear on the page:
+`Barge-in accepted: score ...` and `Ignored utterance ...`. Check before
+quoting a new line:
+
+```bash
+git grep -c "<the string>" master -- '*.py'
+```
+
 ## Claims that were wrong, and how they got caught
 
 The 12 November session contradicted three things the page asserted. All three
@@ -201,6 +216,11 @@ generalised. Re-read the logs before adding a capability claim.
   `www.catabus.com` from an older turn while the screenshot showed the real
   one. It took four wrong URLs to find it.
 - **`gmail_draft` has never run.** See the entry below.
+- **Barge-in is NOT "on a branch".** It merged to `master` on 2026-10-25 in
+  `1be9f6c`, live-validated, and `git merge-base --is-ancestor 1be9f6c
+  origin/master` confirms it. The branch that is still unmerged,
+  `fix/voice-verification-and-echo`, is eight commits of *tuning* for
+  verification and the echo gate -- not the feature. Do not conflate them.
 
 ## Things this rework decided that are easy to undo by accident
 
