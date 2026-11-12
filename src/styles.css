@@ -28,7 +28,8 @@
 :root {
   /* Contrast ratios measured against --ground. Body copy must clear 4.5:1. */
   --ground:   #0b0b0c;              /* near-black, the terminal ground        */
-  --text:     #8f8f93;              /* log default, body copy       6.16:1    */
+  --ground-b: #101013;              /* banded section ground                  */
+  --text:     #a3a3a8;              /* log default, body copy       7.83:1    */
   --ink-mid:  #c2c2c7;              /* machine output, headings    11.09:1    */
   --speech:   #f2f0ed;              /* what I said. brightest      17.29:1    */
   --faint:    #5e5e63;              /* timestamps, source column    2.84:1    */
@@ -41,6 +42,20 @@
   --write:    #e8b44a;              /* verdict write               10.36:1    */
   --blocked:  #e05a44;              /* refused / rejected           5.35:1    */
   --local:    #5a9fd4;              /* routed on-device             6.80:1    */
+  --sonnet:   #b98ae0;              /* routed to the expensive tier 7.28:1    */
+
+  /* PROVENANCE. Which log file a line came from. TWO, not three: the readouts
+   * use jarvisd.log (26 lines) and audit.jsonl (20), and no line on the page
+   * comes from voice_client.log -- which is why the sentence under every
+   * readout says "these two files". Do not add a third tint without first
+   * adding lines that need it.
+   *
+   * Sat at --faint's brightness (3.05:1) rather than the verdict hues', so
+   * they read as tinted metadata and can never be confused with a judgment
+   * the daemon made. Saturated hue = the daemon decided something.
+   * Desaturated hue = this is merely where the line came from. */
+  --src-daemon: #7a6d5a;            /* jarvisd.log                  3.90:1    */
+  --src-audit:  #6b5a7a;            /* audit.jsonl                  3.16:1    */
 
   --rule:     #1e1e21;
   --rule-hi:  #2c2c31;
@@ -105,10 +120,64 @@ a { color: inherit; text-decoration: none; }
   .nav-src { margin-left: auto; padding-left: 0; border-left: 0; }
 }
 
-main { max-width: var(--maxw); margin: 0 auto; padding: 0 var(--gut); }
+/* Sections run the full width so a banded ground reaches the window edge,
+ * while their CONTENT stays on the 1100px measure. The symmetric padding does
+ * both at once, with no wrapper element and -- importantly -- no 100vw, which
+ * is what once added 16px of phantom horizontal scroll here (see README). */
+main { max-width: none; margin: 0; padding: 0; }
+main > * { padding-inline: max(var(--gut), calc((100% - var(--maxw)) / 2)); }
+.nav { padding-inline: max(var(--gut), calc((100% - var(--maxw)) / 2)); }
+
+/* Alternate the ground so six sections read as six slabs instead of one
+ * scroll. Nothing sits BEHIND the content -- this is the section's own
+ * background, so the "nothing lives behind the content" rule still holds. */
+main > *:nth-child(even) { background: var(--ground-b); }
 
 /* --- hero ----------------------------------------------------------------- */
-.hero { padding: clamp(72px, 14vh, 150px) 0 clamp(64px, 10vh, 120px); max-width: 760px; }
+.hero { padding-block: clamp(76px, 15vh, 160px) clamp(64px, 10vh, 120px); }
+.hero-main > * { max-width: 760px; }
+/* Two columns only once the index has somewhere to go. Below that it stacks
+ * under the buttons, which is the right order: the pitch, then the contents. */
+@media (min-width: 1000px) {
+  .hero { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 72px; align-items: start; }
+}
+
+/* --- the record's index --------------------------------------------------- */
+.index { border-top: 1px solid var(--rule-hi); }
+@media (max-width: 999px) { .index { margin-top: 56px; max-width: 420px; } }
+@media (min-width: 1000px) { .index { margin-top: 12px; } }
+.ix-head {
+  padding: 14px 0 12px;
+  font: 500 11px/1 var(--mono);
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--faint);
+}
+/* A row is a link, so the index is navigation and not an ornament: a reader
+ * who only cares about the mail moment can go straight to it. */
+.ix-row {
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr) auto;
+  gap: 4px 12px;
+  padding: 11px 0;
+  border-top: 1px solid var(--rule);
+  align-items: baseline;
+}
+.ix-n { font: 400 13px/1.3 var(--mono); color: var(--ink-mid); font-variant-numeric: tabular-nums; }
+.ix-k {
+  font: 500 11px/1.3 var(--mono);
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--text);
+}
+.ix-l { font: 400 11px/1.3 var(--mono); color: var(--faint); text-align: right; }
+.ix-d { grid-column: 2 / 4; font: 400 11px/1.3 var(--mono); color: var(--faint); }
+.ix-row:hover .ix-k { color: var(--speech); }
+.ix-row:hover .ix-n { color: var(--speech); }
+.ix-foot {
+  margin-top: 2px; padding: 12px 0 0;
+  border-top: 1px solid var(--rule-hi);
+  font: 400 11px/1.3 var(--mono);
+  color: var(--faint);
+}
 .hero h1 {
   font-size: clamp(30px, 5.4vw, 54px);
   line-height: 1.1;
@@ -147,20 +216,71 @@ main { max-width: var(--maxw); margin: 0 auto; padding: 0 var(--gut); }
   letter-spacing: 0.14em; text-transform: uppercase;
   color: var(--text);
 }
-.kicker-n { color: var(--faint); }
+/* The section number carries the record's sequence, so it gets presence
+ * instead of sitting inline at label size. */
+.kicker-n {
+  color: var(--ink-mid);
+  font-size: 15px;
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+}
 /* The section marker is a labelled rule, not a chip. The record is continuous,
  * so a section join is a line drawn across it. */
 .kicker::after { content: ''; flex: 1; height: 1px; background: var(--rule); }
 
-.moment, .band {
-  padding: clamp(56px, 9vh, 104px) 0 clamp(40px, 6vh, 72px);
-  border-top: 1px solid var(--rule);
+/* Moments and bands no longer share a padding. A moment is the page's
+ * subject and gets room; a band is supporting material and gets less. That
+ * difference is what gives scrolling a pulse instead of a constant. */
+.moment {
+  padding-block: clamp(76px, 12vh, 136px) clamp(52px, 8vh, 92px);
+  border-top: 1px solid var(--rule-hi);
 }
-.moment-head { max-width: 62ch; }
+.band {
+  padding-block: clamp(48px, 7vh, 84px) clamp(36px, 5vh, 60px);
+  border-top: 1px solid var(--rule-hi);
+}
+/* The header is two columns on a wide screen: the lead-in on the measure,
+ * the slug beside it. Below 1000px the slug stacks under the blurb, which is
+ * still before the readout -- the point is that the legend arrives first. */
+.moment-head { display: grid; gap: 36px; align-items: start; }
+.mh-main { max-width: 62ch; }
+@media (min-width: 1000px) {
+  .moment-head { grid-template-columns: minmax(0, 1fr) 300px; gap: 72px; }
+}
+
+/* --- the moment slug ------------------------------------------------------ */
+.slug { border-top: 1px solid var(--rule-hi); }
+@media (max-width: 999px) { .slug { max-width: 420px; } }
+@media (min-width: 1000px) { .slug { margin-top: 6px; } }
+.slug-head {
+  padding: 13px 0 11px;
+  font: 500 11px/1 var(--mono);
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--faint);
+}
+.slug-row {
+  display: flex; justify-content: space-between; align-items: baseline; gap: 16px;
+  padding: 9px 0;
+  border-top: 1px solid var(--rule);
+  font: 400 12px/1.3 var(--mono);
+}
+/* The same two tokens the source column uses. This IS the legend -- if these
+ * ever stop matching .rl-src, the tints go back to meaning nothing. */
+.slug-file[data-src="daemon"] { color: var(--src-daemon); }
+.slug-file[data-src="audit"]  { color: var(--src-audit);  }
+.slug-n { color: var(--faint); font-variant-numeric: tabular-nums; }
+.slug-foot {
+  display: flex; justify-content: space-between; gap: 16px;
+  margin-top: 2px; padding: 11px 0 0;
+  border-top: 1px solid var(--rule-hi);
+  font: 400 11px/1.3 var(--mono);
+  color: var(--faint);
+}
 .moment h2, .band h2 {
-  margin-top: 22px;
-  font-size: clamp(22px, 3vw, 31px);
-  line-height: 1.2;
+  margin-top: 20px;
+  font-size: clamp(25px, 3.9vw, 39px);
+  letter-spacing: -0.022em;
+  line-height: 1.14;
   color: var(--speech);
   text-wrap: balance;
 }
@@ -232,7 +352,12 @@ h3.sub {
 @media (prefers-reduced-motion: reduce) { .rl { transition: none; } }
 
 .rl-t { color: var(--faint); font-variant-numeric: tabular-nums; }
+/* Tinted by which log file the line came from. This is the one place the
+ * page's central claim -- two files, interleaved only here -- is visible
+ * rather than asserted in prose. */
 .rl-src { color: var(--faint); font-size: 10.5px; letter-spacing: 0.04em; padding-top: 1px; }
+.rl-src[data-src="daemon"] { color: var(--src-daemon); }
+.rl-src[data-src="audit"]  { color: var(--src-audit);  }
 .rl-body { min-width: 0; overflow-wrap: anywhere; }
 .rl-plain { color: var(--text); }
 .rl-key { color: var(--faint); }
@@ -240,7 +365,11 @@ h3.sub {
 .rl-said { color: var(--speech); }
 .rl-tool { color: var(--ink-mid); }
 .rl-args { color: var(--text); }
+/* Haiku is the default and stays neutral: colouring the default says
+ * nothing. The escalation to sonnet is the exception, so it is the thing
+ * that gets a hue. */
 .rl-route .rl-plain { color: var(--ink-mid); }
+.rl-route .rl-plain[data-esc] { color: var(--sonnet); }
 .rl-reject .rl-plain { color: var(--blocked); }
 
 .rl-verdict { letter-spacing: 0.02em; }
@@ -348,6 +477,11 @@ h3.sub {
 .tier { font: 500 10.5px/1 var(--mono); letter-spacing: 0.1em; text-transform: uppercase; }
 .tier-local { color: var(--local); }
 .tier-cloud { color: var(--faint); }
+/* The hue goes on the MODEL, not the tier badge. Both cloud rows are labelled
+ * "cloud", so colouring the badge put the same word on screen twice in two
+ * colours and made the reader infer why. The model name is the thing that
+ * actually differs, so it is the thing that carries the mark. */
+.routing > li[data-model*="sonnet"] .r-model { color: var(--sonnet); }
 .r-model { font: 400 13px/1 var(--mono); color: var(--ink-mid); }
 @media (max-width: 720px) {
   .routing > li { grid-template-columns: 1fr; gap: 5px; }

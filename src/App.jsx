@@ -2,6 +2,7 @@ import Moment from './readout/Readout'
 import {
   LINKS, RECORD, SURFACES, TOOL_COUNT, STATS, GUARD, ROUTING, SOLID, GROWING,
 } from './data/record'
+import { datesOf } from './readout/derive'
 
 /* -----------------------------------------------------------------------------
  *  The page is the machine's own record of three things it did.
@@ -44,9 +45,37 @@ function Nav() {
   )
 }
 
+/* The record's own index. Every value is DERIVED from RECORD -- the number,
+ * the kicker, the line count, the dates and the file count are all read back
+ * out of the same data the readouts render, so this cannot drift from them
+ * and nothing here is authored. A record has a contents page; that is the one
+ * piece of furniture that belongs at the front of one. */
+const TOTAL_LINES = RECORD.reduce((a, m) => a + m.lines.length, 0)
+const LOG_FILES = new Set(RECORD.flatMap((m) => m.from.match(/[a-z_]+\.(?:log|jsonl)/g) || [])).size
+
+function Index() {
+  return (
+    <nav className="index" aria-label="Contents of the record">
+      <p className="ix-head">The record</p>
+      {RECORD.map((m) => (
+        <a className="ix-row" key={m.id} href={`#${m.id}`}>
+          <span className="ix-n">{m.n}</span>
+          <span className="ix-k">{m.kicker}</span>
+          <span className="ix-l">{m.lines.length} lines</span>
+          <span className="ix-d">{datesOf(m.from)}</span>
+        </a>
+      ))}
+      <p className="ix-foot">
+        {TOTAL_LINES} lines &middot; {LOG_FILES} log files
+      </p>
+    </nav>
+  )
+}
+
 function Hero() {
   return (
     <header className="hero" id="top">
+      <div className="hero-main">
       <h1>
         Ask your smart speaker when your bus leaves.
         <span className="hero-turn">It cannot tell you.</span>
@@ -65,6 +94,8 @@ function Hero() {
         <a className="act act-go" href="#bus">Read the record</a>
         <a className="act" href={LINKS.github} target="_blank" rel="noreferrer">Source on GitHub</a>
       </div>
+      </div>
+      <Index />
     </header>
   )
 }
@@ -115,7 +146,7 @@ function Guard() {
       <h3 className="sub">Which model answers</h3>
       <ul className="routing">
         {ROUTING.map((r) => (
-          <li key={r.model}>
+          <li key={r.model} data-model={r.model}>
             <span className={`tier tier-${r.tier}`}>{r.tier === 'local' ? 'on-device' : 'cloud'}</span>
             <span className="r-model">{r.model}</span>
             <span className="r-d">{r.d}</span>

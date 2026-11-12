@@ -1,5 +1,29 @@
 import { useRef } from 'react'
 import { usePlayback } from './usePlayback'
+import { composition } from './derive'
+
+/* The moment's slug. Doubles as the LEGEND for the source column below it:
+ * the filenames carry the same tints as the `src` cells in the readout, so a
+ * reader learns what tan and mauve mean before they meet them rather than
+ * never. Without this the tints are decoration that happens to be data. */
+function Slug({ m }) {
+  const c = composition(m)
+  return (
+    <aside className="slug">
+      <p className="slug-head">Transcribed from</p>
+      {c.files.map((f) => (
+        <p className="slug-row" key={f.src}>
+          <span className="slug-file" data-src={f.src}>{f.file}</span>
+          <span className="slug-n">{f.n}</span>
+        </p>
+      ))}
+      <p className="slug-foot">
+        <span>{c.total} lines{c.gaps ? ` · ${c.gaps} aside${c.gaps > 1 ? 's' : ''}` : ''}</span>
+        <span className="slug-d">{c.dates}</span>
+      </p>
+    </aside>
+  )
+}
 
 /* A pending figure still reserves a box at `ratio`, so the layout is finished
  * and verifiable before a screenshot exists. Once a real image is in, the
@@ -50,6 +74,9 @@ function Line({ l, on }) {
         <span className="rl-tool">{l.tool}</span> <span className="rl-args">{l.x}</span>
       </>
     )
+  } else if (l.k === 'route') {
+    // Haiku is the default and stays neutral; the escalation is the news.
+    body = <span className="rl-plain" data-esc={/sonnet/i.test(l.x) || undefined}>{l.x}</span>
   } else if (l.k === 'verdict') {
     body = <span className={`rl-verdict v-${l.v}`}>{l.x}</span>
   } else {
@@ -59,7 +86,7 @@ function Line({ l, on }) {
   return (
     <p className={`rl rl-${l.k}${on ? ' is-on' : ''}`}>
       <span className="rl-t" aria-hidden={!l.t}>{l.t}</span>
-      <span className="rl-src">{l.src}</span>
+      <span className="rl-src" data-src={l.src}>{l.src}</span>
       <span className="rl-body">{body}</span>
     </p>
   )
@@ -72,12 +99,15 @@ export default function Moment({ m }) {
   return (
     <section className="moment" id={m.id}>
       <header className="moment-head">
-        <p className="kicker">
-          <span className="kicker-n">{m.n}</span>
-          {m.kicker}
-        </p>
-        <h2>{m.title}</h2>
-        <p className="blurb">{m.blurb}</p>
+        <div className="mh-main">
+          <p className="kicker">
+            <span className="kicker-n">{m.n}</span>
+            {m.kicker}
+          </p>
+          <h2>{m.title}</h2>
+          <p className="blurb">{m.blurb}</p>
+        </div>
+        <Slug m={m} />
       </header>
 
       <div className="track" ref={trackRef} data-playing={playing || undefined}>
@@ -106,8 +136,7 @@ export default function Moment({ m }) {
       <footer className="moment-foot">
         <p className="moment-note">{m.note}</p>
         <p className="from">
-          Transcribed from {m.from}. Every line is real; nothing on this page shows these two files
-          merged except this page.
+          Every line is real; nothing on this page shows these two files merged except this page.
         </p>
       </footer>
     </section>
