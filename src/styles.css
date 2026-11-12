@@ -196,6 +196,10 @@ h3.sub {
 }
 
 .stage { display: grid; gap: 30px; }
+/* 1040px is also MIN_WIDTH in usePlayback.js, and the two must stay equal:
+ * below it the readout and the figure stack, the stage outgrows the sticky
+ * viewport, and its bottom would be cut off with no way to reach it. So below
+ * this width there is no sticky stage at all. */
 @media (min-width: 1040px) {
   .stage { grid-template-columns: minmax(0, 1fr) 286px; align-items: center; gap: 36px; }
 }

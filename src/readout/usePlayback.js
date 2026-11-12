@@ -8,11 +8,13 @@ const clamp01 = (n) => (n < 0 ? 0 : n > 1 ? 1 : n)
  * and is never actually read. */
 const REVEAL_OVER = 0.82
 
-/* Below this width the playback is off entirely. A phone has no travel to
- * spare: the track would have to be taller than the content it reveals, and a
- * reader scrolling a phone one thumb-flick at a time would meet the readout in
- * pieces. Printed is better. */
-const MIN_WIDTH = 721
+/* Below this width the playback is off entirely, and it is NOT the phone
+ * breakpoint -- it is the width at which the figures get their own column
+ * (see the 1040px rule in styles.css). In a single-column stage the readout
+ * and the figure stack, the stage grows taller than the sticky viewport, and
+ * its bottom is simply cut off with no way to scroll to it. Keep these two
+ * numbers equal. */
+const MIN_WIDTH = 1040
 
 /* -----------------------------------------------------------------------------
  *  Scroll-driven playback of a readout.
