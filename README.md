@@ -1,8 +1,8 @@
 # JARVIS — landing page
 
 The public front door for [JARVIS](https://github.com/AKAAKS/personal-assistant),
-a voice and text assistant built on Claude's tool-use loop. React + Vite, static
-output, no backend.
+a voice assistant that runs on my own PC. React + Vite, static output, no
+backend, no WebGL.
 
 ## Run
 
@@ -17,21 +17,69 @@ npm run og       # regenerate public/og.png (needs preview running)
 Deploy `dist/`. For GitHub Pages under a sub-path, set `base: '/<repo>/'` in
 `vite.config.js`.
 
+## The conceit
+
+**The page is the machine's own record of three things it did.** Not a
+description of a product: a record, with the real timestamps and permission
+verdicts left in.
+
+Everything else is derived from that one decision, and the derivation is the
+whole point. The previous version of this page was built around a glowing WebGL
+orb, which could not answer "what is a card?", "what colour is a shadow?" or
+"how do sections join?" — so those were invented, and an invention defaults to
+whatever looks generically nice. That is where the generated look came from.
+From the record you instead get:
+
+| Question | Answer |
+|---|---|
+| What is a section? | A turn, or a set of turns, out of the logs |
+| What is a heading? | The same dim grey as log output. Emphasis is weight and space |
+| What gets colour? | Only what the daemon itself assigns meaning to: a permission verdict, a refusal, the on-device tier |
+| What is brightest? | What I said. Machine output sits a step below it |
+| How do sections join? | A timestamp. The record is continuous |
+| What does scroll do? | Advances time through the record, without ever intercepting the scroll |
+
 ## Where things live
 
 | What | Where |
 |---|---|
-| All copy, links, the integration map, the stats | the consts at the top of `src/App.jsx` |
+| The three readouts, line by line | `RECORD` in `src/data/record.js` |
+| Surfaces, stats, guard claims, copy | the rest of `src/data/record.js` |
 | Colour, type and layout tokens | `:root` in `src/styles.css` |
-| The WebGL orb | `src/orb/` |
+| The scroll playback | `src/readout/usePlayback.js` |
 | og:image generator | `scripts/make-og.mjs` |
+
+## The record is transcribed, not written
+
+Every line of every readout is copied out of a real log file in
+`personal-assistant`. Nothing in them was composed for the page. Three files
+are involved:
+
+```
+logs/voice_client.log   wake word, "Listening...", capture length
+logs/jarvisd.log        "Heard: ...", "Routing to ...", "Audio in: ..."
+logs/audit.jsonl        tool, input, verdict, reason, result_preview
+```
+
+To re-derive or extend them:
+
+```bash
+cd ../personal-assistant
+
+# the spoken side, with the routing decision
+grep -nE 'Heard:|Routing to|Audio in' logs/jarvisd.log
+
+# the tool calls, with their permission verdicts
+grep -iE 'open_url|close_app|gmail' logs/audit.jsonl
+```
+
+The two files are joined on the clock. `jarvisd.log` prints local wall-clock
+with no date; `audit.jsonl` stores UTC ISO-8601. The conversions used for the
+lines currently on the page are written out at the top of `src/data/record.js`.
 
 ## The numbers are measured, not written
 
-The stats row, the tool list and the test count are claims a reader can check
-against the JARVIS repo, so they are derived from it rather than typed from
-memory. They were last verified on 2026-11-11 against `personal-assistant@bc914ea`
-(master):
+Last verified 2026-11-11 against `personal-assistant@bc914ea` (master):
 
 ```bash
 # tests — 1092
@@ -46,72 +94,65 @@ meals food pantry meal_log suggest prep proposals gmail calendar weather'.split(
 print(sum(len(importlib.import_module('jarvisd.tools.'+m).TOOLS) for m in mods))"
 ```
 
-`TOOL_COUNT` and the surface count in `App.jsx` are computed from the
-`INTEGRATIONS` array, so the stats row cannot drift from the map below it. If
-you add a surface, only the array changes.
+`TOOL_COUNT` and the surface count are computed from the `SURFACES` array, so
+the stats row cannot drift from the register below it.
 
 ## Things that will bite you
 
-- **The orb is seeded** (`src/orb/rng.js`). Two loads must produce the identical
-  object, because `public/og.png` is a photograph of it. Changing `ORB_SEED`
-  means regenerating the card.
-- **`coreGeo` needs a `position` attribute** even though the core shader reads
-  `aFrom`/`aTo` and never touches it. three.js derives the draw count from it
-  and silently renders nothing without it.
-- **`npm run og` must not force SwiftShader.** WebGL works there, but the
-  `<Bloom>` pass fails under it and blanks the whole canvas, which looks like
-  WebGL being off and sends you debugging the wrong thing.
-- **The orb stands beside content, never behind it.** `OFFSETS` in
-  `src/orb/Orb.jsx` say where the orb's **inner edge** sits, as a signed
-  fraction of the visible half-width — not where its centre sits. The camera's
-  visible height is fixed but its visible width scales with the viewport's
-  aspect, while the globe's radius is a fixed world value, so positioning by
-  centre still lets the orb eat further into the column as the window narrows.
-  `x = sign * (|edge| * halfWidth + radius)`, resolved against the measured
-  viewport each frame.
-- **`edge` is nominal; the drawn orb is wider.** Nodes sit out to `radius*1.03`,
-  the rings sit outside them and Bloom spreads further again — about 7 points of
-  screen width past `GLOBE_R` at 16:9, and MORE as the viewport narrows. Budget
-  for it when tuning.
-- **Tune a wide beat's edge at the NARROW end of the range.** The pipeline is a
-  fixed 860px, so the share of the screen it occupies grows as the window
-  shrinks (68.9% at 1425px, 74.9% at 1185px) while the orb's edge fraction
-  stays put. A value tuned only on a big monitor overlaps content on a smaller
-  one.
-- **Interpolate the resolved x values, never `edge` itself.** `edge` passes
-  through zero at the crossing and `Math.sign(0)` would snap the orb by a whole
-  radius.
-- **On mobile the orb gets a band of its own** above the headline, sized to be
-  seen WHOLE (`MOBILE_SCALE` 0.41 at y 1.25 = 8.4%-41.3% of the viewport). It
-  used to be big and cropped, reading as a severed half stuck under the nav.
-  `#top.beat`'s mobile `padding-top` reserves that band and must move with it.
+- **No line on a readout may be invented.** The daemon logs what it *heard* but
+  never what it *said*, and the client's rotating log does not retain these
+  turns, so the readouts stop at the tool result rather than carry a
+  reconstructed reply. If a terminal capture ever lands, add `{ k: 'reply' }`
+  lines and they render. Do not write one from memory.
+- **The merge is the page's, and it says so.** No screen in the real system
+  shows those three files interleaved. Every moment carries a line naming the
+  files it was transcribed from; if you add a moment, add that line too.
+- **`rl-gap` is the only non-log line in a readout** — the page's own aside
+  between turns. It is deliberately set in the body face, italic, and out of
+  the timestamp column so it can never be mistaken for machine output. Keep it
+  visually distinct from everything around it.
+- **The scroll playback is monotonic on purpose.** `maxRef` only increases, so
+  a revealed line never hides. That is what makes flicking to the footer safe:
+  a fast scroller cannot end up with less of the page than a slow one. Do not
+  "fix" it to hide lines on the way back up.
+- **Nothing intercepts the scroll.** No wheel, touch or key handler, no
+  `scrollTo`, no rate limiting. The stage is `position: sticky` inside a tall
+  track, which pins visually while the page keeps scrolling 1:1.
+- **Tune the track height by measuring, not by eye.** The scrollable remainder
+  is `track height − 100vh`. At 140vh that was ~256px on a laptop, which put a
+  twelve-line readout inside two wheel notches and read as a flicker. It is
+  190vh now. Step the track at 0/.15/.3/… and count `.rl.is-on`.
+- **Playback is off below 721px and under `prefers-reduced-motion`.** In both
+  cases the track loses its extra height, the stage stops sticking, and every
+  line prints at once. Check both: they are the paths most readers get.
+- **Ruled tables draw top+left on the container and right+bottom on each cell.**
+  Any other split needs `nth-child` corrections that break the moment a row
+  wraps.
+- **Divide the cell count by the column count before you pick a grid.** 13
+  surfaces over a 4-column auto-fit left three dead cells and the border
+  stopped mid-row; it is a row list now. 8 guard items are pinned to 2 columns
+  for the same reason — auto-fit gave 3 and left one cell empty.
 - **Screenshots need `height: auto`.** Every `<img>` carries explicit width and
   height attributes for intrinsic sizing. Without `height: auto` the height
-  ATTRIBUTE becomes the used height while `width: 100%` sets the width, and
-  each one is silently drawn off its true aspect ratio.
-- **Crop screenshots to their content before adding them.** `audit.png` was
-  1905px wide with only ~690px of it carrying anything; squeezed into a 600px
-  column that put the log text at 31% and made it unreadable.
-- **`beatRef` holds a FLOAT**, not an index: beat number plus progress toward
-  the next, so the orb interpolates between placements instead of snapping. The
-  orb rests at its offset for the first 62% of a beat and travels during the
-  last 38%; interpolating across the whole beat means it never actually reaches
-  any designed placement. The core morph is driven by scroll progress and is
-  independent of this.
-- **The orb path has exactly one reversal, at the gate.** Each extra reversal
-  drags it across the full width behind whatever you are reading. This is why
-  `open` is right-aligned: bookending with the orb back on the right would cost
-  a full-width sweep behind the closing content.
-- **Mobile fades the orb on scroll distance, not on beat index.** The phone hero
-  is taller than the viewport, so the reader scrolls through the orb's band
-  while still on beat 0; a per-beat gate leaves the limb over the lead
-  paragraph for the whole first screenful.
-- **Ruled tables draw top+left on the container and right+bottom on each cell.**
-  Any other split needs `nth-child` corrections that break the moment a cell
-  spans two columns — which the register's total row does.
-- **A pipeline step's wrapper is `stage ${kind}`,** so the verdict step carries
-  class `"stage verdict"` and will match a bare `.verdict` selector. Chip rules
-  must be scoped to `.stage-body`.
+  ATTRIBUTE becomes the used height while `width: 100%` sets the width, and the
+  image is silently drawn off its true aspect ratio. This bit all three images
+  on the previous version.
+- **Crop screenshots to their content before adding them.** A 1905px-wide
+  capture with ~690px of actual content, squeezed into a 600px column, put its
+  text at 31% and made it unreadable.
 - **Check 390px as well as desktop.** A `::before` scrim once added 16px of
   horizontal scroll that no element query could find, because a pseudo-element
   has no node to measure.
+- **`npm run og` needs the preview server up.** It photographs the real page at
+  `localhost:4173`; a hand-drawn card would be a second copy of the same thing
+  and would drift from the page silently.
+
+## Pending
+
+The three figures render as labelled placeholders until the screenshots exist.
+Each one's `src`, `w` and `h` go in its `shots` entry in `src/data/record.js`:
+
+1. **The bus** — catabus.com as JARVIS opened it, and the Maps tab with the
+   walking route from my coordinates.
+2. **The machine** — the voice client terminal during the `close Spotify` turn.
+3. **The mail** — a JARVIS-written reply sitting unsent in Drafts.

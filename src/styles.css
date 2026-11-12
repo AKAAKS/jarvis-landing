@@ -1,394 +1,387 @@
-/* =============================================================================
-   JARVIS landing
-
-   THE CONCEIT: the page is the daemon's own log, read top to bottom, with the
-   orb as the running process it describes.
-
-   That is not decoration, it is the thing that answers questions no "glowing
-   sci-fi orb" vibe could, and every rule below is derived from it:
-
-     What is a card?        A log frame. Square, one hairline rule, a mono key
-                            in its head. Not a rounded rect with a soft border.
-     What is a tag?         A token. Square, mono, unfilled. Not a pill.
-     How do sections join?  A labelled rule across the column: 02 ─ THE LOOP ──
-     What colour is a       None. A log is printed, not lit. The orb is the only
-       shadow?              emissive object on the page, because it is the only
-                            thing that is actually running.
-     What does hover do?    Brightens the frame's rule, the way a selected row
-                            in a log reader does. It does not lift or float.
-     Where does colour go?  Only where the daemon has a state: live, the model
-                            tier, the guard's verdict. Nowhere else.
-
-   Geometry is square throughout (--radius: 0). This is the single load-bearing
-   decision in the file — the previous pass kept 999px pills and 13px rounded
-   cards, and that alone was enough to keep the page looking like every other
-   generated landing page, no matter what the colours did.
-============================================================================= */
-
-/* Tokens are named for the job they do, not the colour they are. The page stays
- * warm and emissive because the thing it describes is a daemon that is always
- * awake — that is kept. What changed is that a new colour now has to declare
- * what it signals before it can be added.
+/* -----------------------------------------------------------------------------
+ *  JARVIS landing page.
  *
- * Contrast measured against --surface (#15110b). WCAG AA is 4.5:1 for body
- * text, 3:1 for large text.
- */
+ *  THE CONCEIT: the page is the machine's own record of three things it did.
+ *  Everything below is derived from that, and the derivation is the point --
+ *  the previous version of this file invented a card, a shadow and a section
+ *  join because its organising idea (a glowing orb) could not answer those
+ *  questions, and an invention defaults to whatever looks generically nice.
+ *
+ *  WHAT IT DECIDES
+ *    Geometry      Square. --radius is 0 and stays 0. A log has no rounded
+ *                  corners, and the pills and rounded cards were the single
+ *                  biggest contributor to the generated look.
+ *    Colour        RESERVED FOR MEANING. A hue appears only where the daemon
+ *                  itself assigns one: a permission verdict, a refusal, the
+ *                  on-device tier. Headings, borders, buttons and labels are
+ *                  all the same dim grey as log output. If you are about to
+ *                  colour something because it looks flat, don't.
+ *    Brightness    My speech is the brightest text on the page. The machine's
+ *                  output sits a step below it. That is the right hierarchy
+ *                  for a transcript, and it does the work a colour would.
+ *    Surfaces      None. No fills, no shadows, no glow, no backdrop-filter.
+ *                  Separation is hairlines and space.
+ *    Motion        One thing moves: log lines fade in as you scroll. Nothing
+ *                  else transitions on reveal, and nothing moves on hover.
+ * -------------------------------------------------------------------------- */
+
 :root {
-  /* --- ground --------------------------------------------------------- */
-  --void: #141009;        /* the page behind everything */
-  --surface: #15110b;     /* any frame content is read off */
-  --surface-2: #1b1610;   /* a frame's head, one step up from its body */
+  /* Contrast ratios measured against --ground. Body copy must clear 4.5:1. */
+  --ground:   #0b0b0c;              /* near-black, the terminal ground        */
+  --text:     #8f8f93;              /* log default, body copy       6.16:1    */
+  --ink-mid:  #c2c2c7;              /* machine output, headings    11.09:1    */
+  --speech:   #f2f0ed;              /* what I said. brightest      17.29:1    */
+  --faint:    #5e5e63;              /* timestamps, source column    2.84:1    */
+                                    /* Below 4.5:1 on purpose, and so it is   */
+                                    /* never used for anything you must read: */
+                                    /* timestamps, captions, column labels.   */
 
-  /* --- text ----------------------------------------------------------- */
-  --ink: #f6f4f2;         /* 15.8:1 on --surface */
-  --ink-dim: #cbb89c;     /*  8.9:1 — secondary prose */
-  --ink-faint: #a59376;   /*  5.8:1 — keys, captions, units */
+  /* Meaning. These four are the only hues on the page. */
+  --allowed:  #7bc98a;              /* verdict read_only            9.90:1    */
+  --write:    #e8b44a;              /* verdict write               10.36:1    */
+  --blocked:  #e05a44;              /* refused / rejected           5.35:1    */
+  --local:    #5a9fd4;              /* routed on-device             6.80:1    */
 
-  /* --- signal: what the daemon is doing -------------------------------- */
-  --live: #ffcf5a;           /* awake / listening / the only thing that glows */
-  --accent: #ff9a2e;         /* section markers, spoken examples */
-  --tier-escalated: #ff5e3a; /* the sonnet tier: the expensive path */
-
-  /* --- signal: what the guard decided ----------------------------------- */
-  --verdict-pass: #9fe6b0;   /* read_only, auto-passed */
-  --verdict-write: #ffcf5a;  /* changes state, policy-checked */
-
-  /* --- structure -------------------------------------------------------- */
-  --rule: rgba(255, 200, 140, 0.16);      /* a faint division */
-  --rule-hard: rgba(255, 200, 140, 0.30); /* a real edge */
-  --live-glow: rgba(255, 160, 50, 0.22);  /* spent ONLY on --live things */
+  --rule:     #1e1e21;
+  --rule-hi:  #2c2c31;
 
   --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
-  --sans: 'Sora', system-ui, sans-serif;
-  --body: 'Inter', system-ui, sans-serif;
+  --body: Inter, system-ui, -apple-system, 'Segoe UI', sans-serif;
 
-  /* Square. A readout has no rounded corners. Declared as a token so that
-     "soften it a bit" has to be a decision made in one place, not a value
-     nudged onto one component. */
   --radius: 0;
-  --maxw: 1180px;
-  --col: 600px;           /* the reading column on half-width beats */
-  color-scheme: dark;
+  --maxw: 1100px;
+  --gut: clamp(16px, 4vw, 44px);
 }
 
-* { box-sizing: border-box; }
-html { scroll-behavior: smooth; scroll-padding-top: 56px; } /* = nav height */
-html, body { margin: 0; padding: 0; }
+*, *::before, *::after { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+
 body {
-  background: var(--void);
-  color: var(--ink);
-  font-family: var(--body);
+  margin: 0;
+  background: var(--ground);
+  color: var(--text);
+  font: 400 16px/1.65 var(--body);
   -webkit-font-smoothing: antialiased;
-  overflow-x: hidden;
+  text-rendering: optimizeLegibility;
 }
+
+h1, h2, h3 { font-weight: 500; letter-spacing: -0.015em; margin: 0; color: var(--ink-mid); }
+p { margin: 0; }
+ul { margin: 0; padding: 0; list-style: none; }
 a { color: inherit; text-decoration: none; }
-code, pre { font-family: var(--mono); }
-.muted { color: var(--ink-dim); }
 
-/* ---- fixed field + orb canvas (behind everything) ---- */
-.page { position: relative; z-index: 0; }
-.page-bg {
-  position: fixed; inset: 0; z-index: 0; pointer-events: none;
-  background:
-    radial-gradient(55% 45% at 72% 42%, rgba(255, 150, 40, 0.09), transparent 70%),
-    linear-gradient(180deg, #1b1712, #141009 70%);
-}
-.orb-canvas { position: fixed !important; inset: 0; z-index: 1; pointer-events: none; }
-.nav, .beat, .footer { position: relative; z-index: 2; }
+/* A visible focus ring is the one outline the page allows, because without it
+ * the page is unusable by keyboard. */
+:focus-visible { outline: 1px solid var(--ink-mid); outline-offset: 3px; }
 
-.container { width: 100%; max-width: var(--maxw); margin-inline: auto; padding-inline: 28px; }
-
-/* ================================================================== nav ====
-   A log reader's title bar: flat, square, hairline-ruled, no blur. */
-.nav {
-  position: fixed; top: 0; left: 0; right: 0; z-index: 20;
-  background: var(--void);
-  border-bottom: 1px solid var(--rule);
-}
-.nav-inner { display: flex; align-items: center; gap: 28px; height: 56px; }
-.brand {
-  display: inline-flex; align-items: center; gap: 9px;
-  font-family: var(--mono); font-weight: 500; font-size: 13px; letter-spacing: 0.18em;
-}
-/* The brand mark is the one glowing thing in the chrome, because it stands for
-   the daemon being up. Square, like everything else. */
-.brand-mark {
-  display: grid; place-items: center; width: 22px; height: 22px;
-  background: var(--live); color: #1a1206;
-  box-shadow: 0 0 14px var(--live-glow);
-}
-.nav-links { display: flex; gap: 22px; margin-left: auto; font-family: var(--mono); font-size: 12px; color: var(--ink-faint); }
-.nav-links a { padding: 4px 0; border-bottom: 1px solid transparent; }
-.nav-links a:hover { color: var(--live); border-bottom-color: var(--live); }
-
-/* ============================================================== buttons ====
-   Square, hairline. The filled one is --live because the primary action is
-   "watch the thing run". */
-.btn {
-  display: inline-flex; align-items: center; gap: 9px;
-  font-family: var(--mono); font-size: 12.5px; letter-spacing: 0.06em;
-  padding: 11px 18px; border-radius: var(--radius);
-  border: 1px solid var(--rule-hard); background: none; color: var(--ink);
-  cursor: pointer; transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
-}
-.btn:hover { border-color: var(--live); color: var(--live); }
-.btn-accent { background: var(--live); border-color: var(--live); color: #1a1206; font-weight: 500; }
-.btn-accent:hover { background: transparent; color: var(--live); }
-.btn-ghost, .btn-dark { background: var(--surface); }
-
-/* ================================================================ beats ==== */
-.beat { min-height: 92vh; display: flex; align-items: center; padding: 116px 28px 80px; }
-#top.beat { min-height: 76vh; padding: 84px 28px 40px; }
-
-.beat-left, .beat-wide { justify-content: flex-start; }
-.beat-right { justify-content: flex-end; }
-.beat-center { justify-content: center; text-align: center; }
-
-.panel { width: 100%; position: relative; }
-.beat-left .panel, .beat-right .panel { max-width: var(--col); }
-.beat-wide .panel, .beat-center .panel { max-width: var(--maxw); margin-inline: auto; }
-/* Beats sit inside the same max-width as the wide ones so the reading column
-   starts on the same left edge all the way down the page, rather than being
-   centred in the viewport and drifting as the window resizes. */
-.beat-left .panel, .beat-right .panel { margin-inline: 0; }
-.beat-left > .panel { margin-left: max(0px, calc((100vw - var(--maxw)) / 2)); }
-.beat-right > .panel { margin-right: max(0px, calc((100vw - var(--maxw)) / 2)); }
-
-/* ---- the section marker: a labelled rule, the way a log breaks a run ---- */
-.eyebrow {
-  display: flex; align-items: center; gap: 14px;
-  font-family: var(--mono); font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase;
-  color: var(--accent); margin-bottom: 20px;
-}
-.eyebrow::after { content: ''; flex: 1; height: 1px; background: var(--rule); }
-
-/* ================================================================= hero ==== */
-/* A status line, not a marketing badge: square, mono, one live dot. */
-.pill {
-  display: inline-flex; align-items: center; gap: 9px;
-  font-family: var(--mono); font-size: 11.5px; letter-spacing: 0.1em;
-  color: var(--ink-faint); padding: 6px 12px;
-  border: 1px solid var(--rule); border-radius: var(--radius);
-  background: var(--surface);
-}
-.pill svg { color: var(--live); }
-
-.hero-h1 {
-  font-family: var(--sans); font-weight: 800; letter-spacing: -0.03em; line-height: 1.0;
-  font-size: clamp(42px, 5.6vw, 76px); margin: 18px 0 0;
-}
-.grad { color: var(--live); }
-.lead { font-size: clamp(16px, 1.4vw, 18px); line-height: 1.65; color: var(--ink-dim); max-width: 540px; margin: 22px 0 0; }
-
-.cta-row { display: flex; gap: 10px; margin-top: 26px; flex-wrap: wrap; }
-.cta-row.center { justify-content: center; }
-
-/* Tokens, not pills. Square, mono, unfilled — they read as a printed list of
-   what the process is built from. */
-.stack { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 24px; }
-/* Each token carries its own rule rather than sharing one strip. A shared strip
-   looks tidy on one line and breaks open the moment it wraps, leaving a row
-   with no right edge — which it does at every width below ~1200px. */
-.tag {
-  font-family: var(--mono); font-size: 11px; letter-spacing: 0.04em;
-  color: var(--ink-faint); padding: 7px 11px;
-  border: 1px solid var(--rule); border-radius: var(--radius);
-}
-
-/* ============================================================= headings ==== */
-.beat-h2 { font-family: var(--sans); font-weight: 700; letter-spacing: -0.025em; line-height: 1.06; font-size: clamp(30px, 3.6vw, 46px); margin: 0; }
-.beat-sub { font-size: clamp(15px, 1.3vw, 17px); line-height: 1.65; color: var(--ink-dim); margin: 18px 0 30px; max-width: 680px; }
-.beat-sub code, .lead code { color: var(--live); font-size: 0.9em; }
-
-/* ================================================================ frames ===
-   One frame treatment, reused everywhere. Square, hairline, flat, with its
-   head one step lighter than its body. Nothing here casts a shadow. */
-.code, .shot, .stage-json {
-  background: var(--surface);
-  border: 1px solid var(--rule);
-  border-radius: var(--radius);
-}
-
-/* ---- feature grid: each item is a log entry with a key and a value ---- */
+/* --- the ruled-table model -------------------------------------------------
+ * The container draws top + left; every cell draws right + bottom. This closes
+ * itself for any number of cells, any number of columns, and any cell that
+ * spans two, with no nth-child corrections. The previous version used a shared
+ * strip and lost its right-hand border the moment a row wrapped.
+ * ------------------------------------------------------------------------- */
 .ruled { border-top: 1px solid var(--rule); border-left: 1px solid var(--rule); }
 .ruled > * { border-right: 1px solid var(--rule); border-bottom: 1px solid var(--rule); }
 
-.feat-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0; }
-.feat { display: flex; gap: 14px; padding: 18px; border: none; }
-.feat-ico {
-  flex: none; display: grid; place-items: center; width: 28px; height: 28px;
-  color: var(--live); border: 1px solid var(--rule); border-radius: var(--radius);
+/* --- nav ------------------------------------------------------------------ */
+.nav {
+  position: sticky; top: 0; z-index: 10;
+  display: flex; align-items: center; gap: 24px;
+  padding: 14px var(--gut);
+  background: var(--ground);
+  border-bottom: 1px solid var(--rule);
+  font: 500 12px/1 var(--mono);
+  letter-spacing: 0.06em;
 }
-.feat-t { font-family: var(--sans); font-weight: 600; font-size: 14.5px; }
-.feat-d { color: var(--ink-dim); font-size: 13px; line-height: 1.55; margin-top: 4px; }
-
-/* ============================================================== anatomy ==== */
-/* The pipeline is a log, and a log is read in a column — at the full 1180px
-   the JSON frames stretch into the orb's limb and the Replay control ends up
-   under it. 860px also keeps the longest result line to about 90 characters. */
-.anatomy { margin-top: 4px; max-width: 860px; }
-.cmd-chips { display: flex; flex-wrap: wrap; gap: 0; margin-bottom: 26px; }
-.cmd-chip {
-  display: inline-flex; align-items: center; gap: 8px;
-  font-family: var(--mono); font-size: 12px; color: var(--ink-faint);
-  padding: 10px 14px; border: none;
-  border-radius: var(--radius); background: none; cursor: pointer;
-  transition: color 0.15s ease, background 0.15s ease;
+.brand { color: var(--ink-mid); }
+.nav-links { display: flex; gap: 20px; margin-left: auto; }
+.nav-links a, .nav-src { color: var(--text); }
+.nav-links a:hover, .nav-src:hover, .brand:hover { color: var(--speech); }
+.nav-src { padding-left: 20px; border-left: 1px solid var(--rule); }
+@media (max-width: 720px) {
+  .nav-links { display: none; }
+  .nav-src { margin-left: auto; padding-left: 0; border-left: 0; }
 }
-.cmd-chip:hover { color: var(--live); }
-.cmd-chip.on { color: #1a1206; background: var(--live); }
-.cmd-chip.replay { margin-left: auto; }
 
-/* The pipeline is the page's thesis made literal: the daemon's log, with a
-   spine running down it. Every other frame on the page is a quieter version
-   of this. */
-.pipeline { display: flex; flex-direction: column; }
-.stage { display: grid; grid-template-columns: 30px 1fr; gap: 16px; opacity: 0; transition: opacity 0.35s ease; }
-.stage.in { opacity: 1; }
-.stage-rail { display: flex; flex-direction: column; align-items: center; }
-.stage-ico {
-  display: grid; place-items: center; width: 26px; height: 26px; flex: none;
-  color: var(--live); border: 1px solid var(--rule-hard); background: var(--void);
+main { max-width: var(--maxw); margin: 0 auto; padding: 0 var(--gut); }
+
+/* --- hero ----------------------------------------------------------------- */
+.hero { padding: clamp(72px, 14vh, 150px) 0 clamp(64px, 10vh, 120px); max-width: 760px; }
+.hero h1 {
+  font-size: clamp(30px, 5.4vw, 54px);
+  line-height: 1.1;
+  color: var(--speech);
+  text-wrap: balance;
 }
-.stage-rail::after { content: ''; flex: 1; width: 1px; background: var(--rule); min-height: 10px; }
-.stage:last-child .stage-rail::after { display: none; }
-.stage-body { padding-bottom: 22px; min-width: 0; }
-.stage-label { font-family: var(--mono); font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--ink-faint); margin-bottom: 7px; }
-.stage-heard { font-size: 16px; color: var(--ink); }
-.stage-route { font-family: var(--mono); font-size: 13px; }
-.stage-route code { color: var(--live); }
-.stage-json { margin: 0; font-size: 12.5px; line-height: 1.55; color: #e8dcc6; padding: 13px 15px; overflow-x: auto; white-space: pre; }
-
-/* Scoped to .stage-body on purpose. A pipeline step's wrapper is built as
-   `stage ${kind}`, so the verdict STEP carries class "stage verdict" and
-   matches a bare `.verdict` selector — which drew a full-width box around the
-   whole step. Only the chip inside the body should be styled. */
-.stage-body .verdict {
-  display: inline-flex; align-items: center; gap: 8px;
-  font-family: var(--mono); font-size: 12px; padding: 6px 11px;
-  border-radius: var(--radius); border: 1px solid;
+/* The turn. Dimmer and smaller than the question above it, because it is the
+ * answer rather than the headline. */
+.hero-turn {
+  display: block; margin-top: 14px;
+  font-size: clamp(22px, 3.6vw, 36px);
+  color: var(--text);
 }
-.stage-body .verdict.read_only { color: var(--verdict-pass); border-color: rgba(159, 230, 176, 0.35); }
-.stage-body .verdict.write { color: var(--verdict-write); border-color: var(--rule-hard); }
-.stage-result { display: flex; align-items: flex-start; gap: 9px; font-size: 13.5px; color: var(--ink-dim); overflow-wrap: anywhere; }
-.stage-result svg { color: var(--verdict-pass); flex: none; margin-top: 3px; }
-.stage-reply { font-size: 15px; color: var(--ink); display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-.wave { display: inline-flex; align-items: flex-end; gap: 2px; height: 14px; }
-.wave i { width: 2px; height: 100%; background: var(--live); animation: wv 1s ease-in-out infinite; }
-.wave i:nth-child(2) { animation-delay: 0.15s; } .wave i:nth-child(3) { animation-delay: 0.3s; }
-.wave i:nth-child(4) { animation-delay: 0.45s; } .wave i:nth-child(5) { animation-delay: 0.6s; }
-@keyframes wv { 0%, 100% { transform: scaleY(0.35); } 50% { transform: scaleY(1); } }
+.hero-lead { margin-top: 32px; font-size: clamp(16px, 1.6vw, 18.5px); color: var(--ink-mid); max-width: 62ch; }
+.hero-sub { margin-top: 18px; max-width: 62ch; }
+.hero-acts { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 38px; }
 
-/* =============================================================== map grid ==
-   A register of surfaces. One continuous ruled table, not 13 floating cards. */
-.map-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; }
-.map-card { border: none; padding: 16px; transition: background 0.15s ease; }
-.map-card:hover { background: var(--surface-2); }
-.map-head { display: flex; align-items: center; gap: 10px; }
-.map-ico { display: grid; place-items: center; width: 24px; height: 24px; color: var(--live); border: 1px solid var(--rule); }
-.map-name { font-family: var(--sans); font-weight: 600; font-size: 14px; }
-.map-count { margin-left: auto; font-family: var(--mono); font-size: 11px; color: var(--ink-faint); }
-.map-tools { display: flex; flex-wrap: wrap; gap: 4px 10px; margin: 12px 0 10px; }
-.map-tools code { font-size: 10.5px; color: var(--ink-faint); }
-.map-ex { font-size: 12.5px; color: var(--accent); font-style: italic; }
-
-/* 13 surfaces over 3 columns leaves two dead cells in the last row. A register
-   ends on its total, so the total fills them — the span is set per breakpoint
-   to match however many cells are actually left over (13 % 3 = 1 -> 2 spare,
-   13 % 2 = 1 -> 1 spare, 1 column -> none). */
-.map-total {
-  grid-column: span 2; display: flex; align-items: baseline; gap: 12px; padding: 16px;
+.act {
+  padding: 12px 18px;
+  border: 1px solid var(--rule-hi);
+  border-radius: var(--radius);
+  font: 500 12.5px/1 var(--mono);
+  letter-spacing: 0.04em;
+  color: var(--text);
+  transition: border-color 0.15s, color 0.15s;
 }
-.map-total-n { font-family: var(--mono); font-size: 28px; color: var(--live); line-height: 1; }
-.map-total-l { font-family: var(--mono); font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-faint); }
+/* Hover brightens the rule. It does not lift, scale, glow or fill: the page
+ * has no raised surfaces for a thing to lift off. */
+.act:hover { border-color: var(--ink-mid); color: var(--speech); }
+.act-go { color: var(--ink-mid); border-color: var(--text); }
 
-/* ================================================================= stats ===
-   One readout strip divided by rules, not four separate boxes. */
-.stat-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; margin: 0 0 30px; }
-.stat { border: none; padding: 20px 16px; text-align: left; }
-.stat-n { font-family: var(--mono); font-weight: 500; font-size: clamp(24px, 3vw, 34px); color: var(--live); line-height: 1; }
-.stat-l { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-faint); margin-top: 8px; }
-
-/* =============================================================== two col === */
-.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
-.col-card { border: none; padding: 22px; }
-.col-head {
-  display: inline-flex; align-items: center; gap: 9px;
-  font-family: var(--mono); font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase;
-  margin-bottom: 16px;
+/* --- section furniture ---------------------------------------------------- */
+.kicker {
+  display: flex; align-items: center; gap: 12px;
+  font: 500 11px/1 var(--mono);
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--text);
 }
-.col-card.solid .col-head { color: var(--verdict-pass); }
-.col-card.growing .col-head { color: var(--accent); }
-.col-row { padding: 13px 0; border-top: 1px solid var(--rule); }
-.col-row:first-of-type { border-top: none; padding-top: 0; }
-.col-t { font-family: var(--sans); font-weight: 600; font-size: 14px; }
-.col-d { color: var(--ink-dim); font-size: 13px; line-height: 1.55; margin-top: 4px; }
+.kicker-n { color: var(--faint); }
+/* The section marker is a labelled rule, not a chip. The record is continuous,
+ * so a section join is a line drawn across it. */
+.kicker::after { content: ''; flex: 1; height: 1px; background: var(--rule); }
 
-/* ================================================================== code === */
-.code { margin-top: 28px; overflow: hidden; text-align: left; }
-.code-bar, .shot-bar {
-  display: flex; align-items: center; gap: 9px;
-  font-family: var(--mono); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
-  color: var(--ink-faint); padding: 9px 15px;
-  background: var(--surface-2); border-bottom: 1px solid var(--rule);
+.moment, .band {
+  padding: clamp(56px, 9vh, 104px) 0 clamp(40px, 6vh, 72px);
+  border-top: 1px solid var(--rule);
 }
-.code pre { margin: 0; padding: 18px; font-size: 13px; line-height: 1.75; color: #e8dcc6; overflow-x: auto; }
+.moment-head { max-width: 62ch; }
+.moment h2, .band h2 {
+  margin-top: 22px;
+  font-size: clamp(22px, 3vw, 31px);
+  line-height: 1.2;
+  color: var(--speech);
+  text-wrap: balance;
+}
+.blurb { margin-top: 18px; max-width: 64ch; }
+h3.sub {
+  margin-top: 44px; padding-bottom: 10px;
+  border-bottom: 1px solid var(--rule);
+  font: 500 11px/1 var(--mono);
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--text);
+}
 
-/* ================================================================= shots === */
-/* Same reading column as the pipeline, for the same reason. */
-.shot { margin: 30px 0 0; max-width: 860px; overflow: hidden; }
-/* height:auto is load-bearing. Every <img> here carries explicit width and
-   height attributes (for intrinsic sizing, so the layout does not jump while
-   they load). Without height:auto that height ATTRIBUTE becomes the used
-   height while width:100% sets the width, so each screenshot is squeezed or
-   stretched off its true aspect ratio — cli.png is 2.61:1 and was being drawn
-   at 3.02:1. */
+/* --- the track and the sticky stage ---------------------------------------
+ * The track is taller than the viewport; the stage sticks inside it. Scrolling
+ * the extra 40vh is what advances the readout. No handler is attached to the
+ * wheel, to touch or to keys, so the page always scrolls 1:1 -- the stage
+ * simply stays put while the lines arrive.
+ *
+ * data-playing is set by the hook only when the viewport is wide enough AND
+ * reduced motion is off. Without it the track gets no extra height, the stage
+ * does not stick, and every line renders at once.
+ * ------------------------------------------------------------------------- */
+/* 190vh, so the scrollable remainder is ~90vh. At 140vh the remainder was
+ * 40vh -- about 256px on a laptop, which put a twelve-line readout inside two
+ * wheel notches and read as a flicker rather than as playback. Measured, not
+ * guessed: step the track at 0/.15/.3/... and count .rl.is-on. */
+.track { margin-top: 40px; }
+.track[data-playing] { height: 190vh; }
+.track[data-playing] .stage {
+  position: sticky; top: 0;
+  min-height: 100vh;
+  display: grid; align-content: center;
+}
+
+.stage { display: grid; gap: 30px; }
+@media (min-width: 1040px) {
+  .stage { grid-template-columns: minmax(0, 1fr) 286px; align-items: center; gap: 36px; }
+}
+
+/* --- the readout ---------------------------------------------------------- */
+.readout { border-left: 1px solid var(--rule); padding-left: 18px; }
+
+.rl {
+  display: grid;
+  grid-template-columns: 62px 46px minmax(0, 1fr);
+  gap: 0 12px;
+  font: 400 12.5px/1.7 var(--mono);
+  padding: 1.5px 0;
+  /* A hidden line keeps its space and sits at a near-invisible ghost, so the
+   * record's full shape is there from the start and nothing reflows as it
+   * fills. Reflow inside a sticky stage reads as the page glitching. */
+  opacity: 0.06;
+  transition: opacity 0.4s ease;
+}
+.rl.is-on { opacity: 1; }
+@media (prefers-reduced-motion: reduce) { .rl { transition: none; } }
+
+.rl-t { color: var(--faint); font-variant-numeric: tabular-nums; }
+.rl-src { color: var(--faint); font-size: 10.5px; letter-spacing: 0.04em; padding-top: 1px; }
+.rl-body { min-width: 0; overflow-wrap: anywhere; }
+.rl-plain { color: var(--text); }
+.rl-key { color: var(--faint); }
+/* The brightest thing on the page: what I actually said. */
+.rl-said { color: var(--speech); }
+.rl-tool { color: var(--ink-mid); }
+.rl-args { color: var(--text); }
+.rl-route .rl-plain { color: var(--ink-mid); }
+.rl-reject .rl-plain { color: var(--blocked); }
+
+.rl-verdict { letter-spacing: 0.02em; }
+.v-read_only { color: var(--allowed); }
+.v-write { color: var(--write); }
+.v-blocked { color: var(--blocked); }
+
+/* The page's own aside between turns. Deliberately NOT mono and NOT aligned to
+ * the timestamp column, so it can never be mistaken for something the machine
+ * printed. */
+.rl-gap {
+  display: flex; align-items: center; gap: 14px;
+  margin: 16px 0; padding: 0;
+  font: italic 400 13.5px/1.5 var(--body);
+  color: var(--faint);
+  opacity: 0.06;
+  transition: opacity 0.4s ease;
+}
+.rl-gap.is-on { opacity: 1; }
+.rl-gap-rule { width: 40px; height: 1px; background: var(--rule-hi); flex: none; }
+
+/* --- figures -------------------------------------------------------------- */
+.shots { display: grid; gap: 22px; align-content: center; }
+.shot {
+  margin: 0;
+  border: 1px solid var(--rule);
+  opacity: 0.06;
+  transition: opacity 0.5s ease;
+  display: grid;
+  grid-template-rows: 1fr auto;
+  overflow: hidden;
+}
+.shot.is-on { opacity: 1; }
+@media (prefers-reduced-motion: reduce) { .shot { transition: none; } }
+
+/* height:auto is load-bearing. Every img carries width/height attributes for
+ * intrinsic sizing, and without this the height ATTRIBUTE becomes the used
+ * height while width:100% sets the width, which silently drew all three
+ * screenshots on the previous version of this page off their true aspect
+ * ratio. */
 .shot img { display: block; width: 100%; height: auto; }
 
-/* Never upscale a screenshot past its own pixels: it only adds blur. The cap
-   is each image's natural width, so the frame shrinks to fit the evidence
-   rather than the evidence being stretched to fit the frame. */
-.shot-cli { max-width: 745px; }    /* cli.png is 745px wide */
-.shot-audit { max-width: 692px; }  /* audit.png is 692px wide */
-.shot-cap { font-family: var(--mono); font-size: 11.5px; color: var(--ink-faint); padding: 10px 15px; border-top: 1px solid var(--rule); margin: 0; }
-
-/* ================================================================ footer === */
-.footer { border-top: 1px solid var(--rule); margin-top: 20px; background: var(--void); }
-.footer-inner { display: flex; align-items: center; justify-content: space-between; height: 64px; font-family: var(--mono); font-size: 11.5px; color: var(--ink-faint); }
-
-/* ============================================================ responsive === */
-@media (max-width: 1040px) {
-  .map-grid { grid-template-columns: repeat(2, 1fr); }
-  .map-total { grid-column: span 1; }
+.shot-pending {
+  display: grid; align-content: center; gap: 10px;
+  padding: 20px;
+  background: repeating-linear-gradient(
+    135deg, transparent, transparent 9px, var(--rule) 9px, var(--rule) 10px
+  );
 }
-@media (max-width: 920px) {
-  .beat { padding: 96px 20px 56px; min-height: auto; }
-  .beat-left, .beat-right, .beat-wide, .beat-center { justify-content: flex-start; text-align: left; }
-  .beat-left .panel, .beat-right .panel, .beat-wide .panel, .beat-center .panel { max-width: 100%; margin: 0; }
-  /* Reserve the band the orb stands in (8.4%-41.3% of the viewport, see
-     MOBILE_OFFSET in Orb.jsx) so the headline starts below it instead of
-     underneath it. Capped so a short landscape viewport does not push the
-     headline off the fold entirely. */
-  #top.beat { min-height: auto; padding-top: min(45vh, 330px); }
-  .nav-links { display: none; }
-  .feat-grid { grid-template-columns: 1fr; }
-  .two-col { grid-template-columns: 1fr; }
-  .stat-row { grid-template-columns: repeat(2, 1fr); }
-}
-@media (max-width: 620px) {
-  .map-grid { grid-template-columns: 1fr; }
-  .map-total { grid-column: span 1; }
-  .cmd-chips { flex-direction: column; }
-  .cmd-chip { justify-content: flex-start; }
-  .cmd-chip.replay { margin-left: 0; }
-  .cta-row { flex-direction: column; align-items: stretch; }
-  .cta-row .btn { justify-content: center; }
-  .stack { width: 100%; }
+.shot-pending-tag { font: 500 10px/1 var(--mono); letter-spacing: 0.14em; text-transform: uppercase; color: var(--text); }
+.shot-pending-alt { font-size: 12.5px; line-height: 1.5; color: var(--faint); }
+.shot figcaption {
+  padding: 9px 12px;
+  border-top: 1px solid var(--rule);
+  font: 400 11px/1.4 var(--mono);
+  color: var(--faint);
 }
 
-/* ========================================================= reduced motion == */
-@media (prefers-reduced-motion: reduce) {
-  html { scroll-behavior: auto; }
-  .stage { opacity: 1; }
-  .wave i { animation: none; }
+/* --- moment footer -------------------------------------------------------- */
+.moment-foot { margin-top: 36px; max-width: 64ch; }
+.moment-note { color: var(--text); }
+.from {
+  margin-top: 14px; padding-top: 14px;
+  border-top: 1px solid var(--rule);
+  font: 400 11.5px/1.6 var(--mono);
+  color: var(--faint);
+}
+
+/* --- reach ---------------------------------------------------------------- */
+/* A row per surface, not a card grid. 13 surfaces over a wrapping grid left
+ * three dead cells in the last row and the ruled border stopped mid-row; a row
+ * list closes itself at any count and any width, and reads more like the
+ * register it is. */
+.surfaces { margin-top: 36px; border-top: 1px solid var(--rule); }
+.surfaces > li {
+  display: grid; grid-template-columns: 210px minmax(0, 1fr) 72px;
+  gap: 20px; align-items: baseline;
+  padding: 13px 2px; border-bottom: 1px solid var(--rule);
+}
+.surf-name { color: var(--ink-mid); font-size: 14.5px; }
+.surf-ex { font-size: 13.5px; color: var(--text); }
+.surf-n { font: 400 11px/1 var(--mono); color: var(--faint); text-align: right; }
+@media (max-width: 720px) {
+  .surfaces > li { grid-template-columns: 1fr auto; gap: 4px 14px; }
+  .surf-ex { grid-column: 1; }
+  .surf-n { grid-row: 1; grid-column: 2; }
+}
+
+/* --- guard ---------------------------------------------------------------- */
+/* Two columns, never three: there are 8 items, so 2 or 4 columns divide
+ * evenly and 3 leaves a dead cell with no borders on it. Pinned rather than
+ * auto-fit so adding a ninth item is a visible decision. */
+.guard-list { display: grid; grid-template-columns: 1fr; margin-top: 36px; }
+@media (min-width: 860px) { .guard-list { grid-template-columns: 1fr 1fr; } }
+.guard-list > li { padding: 18px 20px; }
+.g-t { color: var(--ink-mid); font-size: 14.5px; }
+.g-d { margin-top: 7px; font-size: 13.5px; }
+
+.routing { margin-top: 22px; }
+.routing > li {
+  display: grid; grid-template-columns: 90px 190px minmax(0, 1fr); gap: 16px;
+  align-items: baseline;
+  padding: 13px 0; border-bottom: 1px solid var(--rule);
+  font-size: 13.5px;
+}
+.tier { font: 500 10.5px/1 var(--mono); letter-spacing: 0.1em; text-transform: uppercase; }
+.tier-local { color: var(--local); }
+.tier-cloud { color: var(--faint); }
+.r-model { font: 400 13px/1 var(--mono); color: var(--ink-mid); }
+@media (max-width: 720px) {
+  .routing > li { grid-template-columns: 1fr; gap: 5px; }
+}
+
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); margin-top: 44px; }
+.stats > li { padding: 20px; display: grid; gap: 7px; }
+.stat-n { font: 400 clamp(26px, 3.6vw, 36px)/1 var(--mono); color: var(--speech); }
+.stat-l { font: 400 11px/1 var(--mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--faint); }
+
+.honest { display: grid; gap: 34px; }
+@media (min-width: 860px) { .honest { grid-template-columns: 1fr 1fr; gap: 48px; } }
+.plain > li { padding: 15px 0; border-bottom: 1px solid var(--rule); font-size: 13.5px; }
+.plain b { display: block; font-weight: 500; color: var(--ink-mid); }
+.plain span { display: block; margin-top: 5px; }
+
+/* --- run ------------------------------------------------------------------ */
+.cmd {
+  margin: 34px 0 0;
+  padding: 20px;
+  border: 1px solid var(--rule);
+  overflow-x: auto;
+  font: 400 12.5px/1.9 var(--mono);
+  color: var(--ink-mid);
+}
+.band-run .act { margin-top: 30px; display: inline-block; }
+
+/* --- foot ----------------------------------------------------------------- */
+.foot {
+  display: flex; flex-wrap: wrap; gap: 20px;
+  max-width: var(--maxw); margin: 0 auto;
+  padding: 30px var(--gut) 60px;
+  border-top: 1px solid var(--rule);
+  font: 400 11.5px/1 var(--mono);
+  color: var(--faint);
+}
+.foot a { margin-left: auto; }
+.foot a:hover { color: var(--speech); }
+
+/* --- narrow --------------------------------------------------------------- */
+@media (max-width: 720px) {
+  /* The source column is the first thing to go: on a phone the transcribed-from
+   * note under each readout carries the same information in prose, and three
+   * columns of mono at 12px do not fit a 390px screen. */
+  .rl { grid-template-columns: 58px minmax(0, 1fr); gap: 0 10px; font-size: 11.5px; }
+  .rl-src { display: none; }
+  .readout { padding-left: 12px; }
+  .rl-gap { font-size: 12.5px; }
 }

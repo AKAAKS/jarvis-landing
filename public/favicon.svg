@@ -1,9 +1,12 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
-  <!-- Warm charcoal + gold, matching the page. The previous icon was #4f6bf6
-       indigo, left over from the starter template, so the browser tab was the
-       one part of the product that was still the wrong colour. -->
-  <rect width="64" height="64" rx="14" fill="#15110b"/>
-  <rect x="26" y="14" width="12" height="24" rx="6" fill="#ffcf5a"/>
-  <path d="M20 32a12 12 0 0 0 24 0" fill="none" stroke="#ffcf5a" stroke-width="3" stroke-linecap="round"/>
-  <line x1="32" y1="44" x2="32" y2="50" stroke="#ffcf5a" stroke-width="3" stroke-linecap="round"/>
+  <!-- A log line, which is what the page is. Square, because nothing on this
+       page is rounded, and the one coloured mark is the permission verdict
+       (#e8b44a = write) rather than a brand colour. -->
+  <rect width="64" height="64" fill="#0b0b0c"/>
+  <rect x="12" y="19" width="16" height="3" fill="#5e5e63"/>
+  <rect x="32" y="19" width="20" height="3" fill="#f2f0ed"/>
+  <rect x="12" y="30" width="16" height="3" fill="#5e5e63"/>
+  <rect x="32" y="30" width="13" height="3" fill="#c2c2c7"/>
+  <rect x="12" y="41" width="16" height="3" fill="#5e5e63"/>
+  <rect x="32" y="41" width="10" height="3" fill="#e8b44a"/>
 </svg>
