@@ -23,11 +23,16 @@
     <!-- Standalone by design: the app's stylesheet is hashed at build time, so
          this page carries the same tokens rather than linking a moving target.
          Same rules as the landing page — square, hairlines, no fills, colour
-         reserved for meaning. -->
+         reserved for meaning.
+
+         THE COST of that copy is that these tokens can drift. --text was
+         lifted #8f8f93 -> #a3a3a8 (6.11:1 -> 7.83:1) on the landing page and
+         had to be changed here by hand. If you retune :root in styles.css,
+         check this block against it. -->
     <style>
       :root {
         --ground:  #0b0b0c;
-        --text:    #8f8f93;
+        --text:    #a3a3a8;
         --ink-mid: #c2c2c7;
         --speech:  #f2f0ed;
         --faint:   #5e5e63;
