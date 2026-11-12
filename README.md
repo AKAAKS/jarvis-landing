@@ -34,7 +34,7 @@ From the record you instead get:
 |---|---|
 | What is a section? | A turn, or a set of turns, out of the logs |
 | What is a heading? | The same dim grey as log output. Emphasis is weight and space |
-| What gets colour? | Only what the daemon itself assigns meaning to: a permission verdict, a refusal, the on-device tier |
+| What gets colour? | Only what the daemon itself assigns meaning to: a permission verdict, a refusal, the routing tier, and which log file a line came from |
 | What is brightest? | What I said. Machine output sits a step below it |
 | How do sections join? | A timestamp. The record is continuous |
 | What does scroll do? | Advances time through the record, without ever intercepting the scroll |
@@ -143,6 +143,17 @@ the stats row cannot drift from the register below it.
   `prefers-reduced-motion`.** In both cases the track loses its extra height,
   the stage stops sticking, and every line prints at once. Check both: they
   are the paths most readers get.
+- **Playback needs viewport HEIGHT, and the thresholds are small.** The fit
+  gate switches a readout to static when it is taller than
+  `innerHeight - 56`. Measured: moment 01 needs a **597px** window, 03 needs
+  560, 02 needs only 399. A 1366x768 laptop sits right on the line, so the
+  same page can play one moment and print the other two. If someone reports
+  "it does not fade", ask for `innerHeight` before touching the code.
+- **`maxRef` never resets without a reload.** Reveal is monotonic by design,
+  so once a readout has been scrolled past it stays fully printed for the
+  rest of that page session -- scrolling back up will not replay it. This is
+  correct, and it also invalidates any test that scrolls the same track
+  twice. Reload between runs or you will measure your own previous scroll.
 - **Do not measure the reveal with short sleeps.** The hook updates inside
   `requestAnimationFrame`, which a browser throttles when the tab is not
   focused, so a scroll-and-sample loop at 120-300ms reports a stuttering
@@ -242,3 +253,23 @@ generalised. Re-read the logs before adding a capability claim.
 - **`aspectRatio` is for placeholders only.** A real `<img>` carries its own
   intrinsic ratio via its width/height attributes; setting a ratio on the
   `<figure>` as well cropped the image inside `overflow: hidden`.
+- **Full-bleed sections are done with padding, never `100vw`.** `main` has no
+  max-width; each section runs the full width and holds its content on the
+  measure with
+  `padding-inline: max(var(--gut), calc((100% - var(--maxw)) / 2))`.
+  `width: 100vw` includes the scrollbar and is exactly how this page got 16px
+  of phantom horizontal scroll once already.
+- **The banded ground is the section's own background**, set by
+  `main > *:nth-child(even)`. It is not an element behind the content, which
+  is what keeps the "nothing lives behind the content" rule intact. Adding a
+  real background layer breaks that rule, and the orb is why the rule exists.
+- **The moment slug IS the legend for the provenance tints.** `.slug-file`
+  and `.rl-src` must resolve to the same two tokens. If they ever drift, the
+  tints in the source column go back to being decoration that happens to be
+  data, because nothing else on the page says what tan and mauve mean. Check
+  by computed colour, not by eye.
+- **Derived views compute from `RECORD`, never from a written-down number.**
+  The hero index and the moment slugs both go through
+  `src/readout/derive.js`. Adding a line to a moment must move every count
+  on the page by itself. Writing "20 lines" anywhere is how it starts
+  drifting.
