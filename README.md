@@ -208,10 +208,18 @@ The 12 November session contradicted three things the page asserted. All three
 came from building a moment out of one good day's logs and assuming it
 generalised. Re-read the logs before adding a capability claim.
 
-- **It does not reliably open Maps with a route.** On 30 October it built
-  `/maps/dir/<coords>/Crunch+Fitness...`; on 12 November the same request
-  opened `maps.google.com` and nothing else. This is now in `GROWING`, not
-  the hero.
+- **Directions were never a regression, and are now granted outright.** On 30
+  October it built `/maps/dir/<coords>/Crunch+Fitness...`; on 12 November the
+  same request opened `maps.google.com` and nothing else. Neither was a code
+  change: the prompt never granted the capability, so October was improvisation
+  that a clean context reproduced ~4 times in 5 and a context containing its own
+  "I can only open URLs" reproduced 0 times in 5 -- and `_load_history` restores
+  20 turns at startup, so that refusal reloaded after every restart.
+  `personal-assistant@aea445b` states the capability in the prompt instead;
+  it is in `SOLID` now. **It still cannot report travel time** -- there is no
+  duration tool anywhere in `jarvisd/tools/`, and the capability text tells it
+  to let the user read the time off the map. Do not write copy implying an ETA,
+  approximate or otherwise; a spoken guess is not logged and not checkable.
 - **The transit site is `realtime.catabus.com`.** The page quoted
   `www.catabus.com` from an older turn while the screenshot showed the real
   one. It took four wrong URLs to find it.

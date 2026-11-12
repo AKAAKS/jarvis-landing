@@ -279,6 +279,7 @@ export const SOLID = [
   { t: 'The gate was designed in', d: 'Audited, turn-bounded and fail-closed, not bolted on afterwards.' },
   { t: 'Cost-engineered', d: 'Cheapest capable model per request, under a hard $20 per month cap.' },
   { t: 'Barge-in ships', d: 'Say the wake word over a spoken reply and it stops, keeps the cut-off turn in history, and takes the correction. Merged to master on 25 October after a live-mic pass.' },
+  { t: 'Directions, walking or by bus', d: 'It builds a real Maps route URL -- origin, destination, travel mode -- and opens it. Asked for the same route by bus, it changes the mode rather than starting over. Granted outright in the prompt on 12 November; the older improvised version was a coin flip.' },
 ]
 
 export const GROWING = [
@@ -286,5 +287,5 @@ export const GROWING = [
   { t: 'Loopback only', d: 'The WebSocket has no auth, so it stays bound to localhost rather than the network.' },
   { t: 'No voice satellite yet', d: 'A remote mic puck on a Pi is design intent, not shipped.' },
   { t: 'The voice tuning is unmerged', d: 'Eight commits retuning speaker verification and the echo gate are live-tested on a branch, not on master. The record above was recorded with them on.' },
-  { t: 'Directions are hit and miss', d: 'On 30 October it built a Maps URL from my coordinates and a destination. On 12 November the same request opened the Maps home page and nothing else.' },
+  { t: 'It opens the route; it cannot read it back', d: 'No travel-time tool exists, so it cannot say how long the trip takes. It opens the map, says it has, and leaves you to read the time off it. A Routes API tool is the next piece of work.' },
 ]
